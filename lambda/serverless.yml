@@ -1,0 +1,61 @@
+service: audio-processor-lambda
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
+    S3_BUCKET: ${self:custom.bucket}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:DeleteObject
+          Resource: 
+            - arn:aws:s3:::${self:custom.bucket}/*
+
+custom:
+  bucket: ${opt:bucket, 'audio-processor-bucket-${self:provider.stage}'}
+
+plugins:
+  - serverless-plugin-typescript
+
+package:
+  individually: true
+  patterns:
+    - '!node_modules/.prisma/**'
+    - '!node_modules/@prisma/client/**'
+    - '!node_modules/**'
+    - 'node_modules/@aws-sdk/**'
+    - 'node_modules/@middy/**'
+
+functions:
+  addAudio:
+    handler: src/handlers/addAudio.handler
+    events:
+      - http:
+          path: /audio/add
+          method: post
+          cors: true
+
+  mergeAudio:
+    handler: src/handlers/mergeAudio.handler
+    events:
+      - http:
+          path: /audio/merge
+          method: post
+          cors: true
+    timeout: 30 # Increased timeout for audio processing
+
+  removeAudio:
+    handler: src/handlers/removeAudio.handler
+    events:
+      - http:
+          path: /audio/remove/{key}
+          method: delete
+          cors: true

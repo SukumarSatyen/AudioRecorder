@@ -1,0 +1,46 @@
+TypeScript configuration files in the frontend folder:
+
+tsconfig.json:
+
+
+tsconfig.json:(1-11)
+This is the root TypeScript configuration file. It acts as a reference manager, pointing to two other config files:
+
+tsconfig.app.json: For the React application code
+tsconfig.node.json: For Node.js specific code (like Vite config)
+
+tsconfig.app.json:
+
+
+tsconfig.app.json:(1-21)
+This configures TypeScript for your React application code:
+
+Sets ES2020 as the target JavaScript version
+Enables React JSX support
+Sets up module resolution for bundlers like Vite
+Configures strict type checking
+Includes DOM types for browser APIs
+
+tsconfig.node.json:
+
+
+tsconfig.node.json:(1-21)
+This configures TypeScript for Node.js environment code:
+
+Specifically includes vite.config.ts
+Uses ES2022 target
+Doesn't include DOM types (since it's for Node.js)
+Also sets up module resolution for bundlers
+
+
+The split configuration serves several purposes:
+
+Separation of Concerns: Different parts of your codebase need different settings
+Browser code needs DOM types
+Node.js code needs different target versions
+Different module resolution strategies
+Performance: By splitting configs, TypeScript only loads the necessary type definitions for each context, making type checking faster
+Clarity: Makes it clear which files are meant for browser vs Node.js environments
+Vite Integration: Vite specifically looks for this structure to properly handle TypeScript in both browser and Node.js contexts
+
+You could technically combine these into one file, but the separation is a best practice for larger applications, especially when using modern build tools like Vite.
