@@ -1,1 +1,16 @@
-{}
+{
+  "name": "audio-recorder",
+  "version": "1.0.0",
+  "description": "Audio recording and transcription application with frontend and backend services",
+  "type": "module",
+  "scripts": {
+    "prestart": "npm cache clean --force && npm install",
+    "start": "cd frontend && npm install && npm run dev",
+    "frontend": "cd frontend && npm install && npm run dev",
+    "backend": "cd backend && npm install && cross-env NODE_NO_WARNINGS=1 npm run dev"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.0",
+    "cross-env": "^7.0.3"
+  }
+}

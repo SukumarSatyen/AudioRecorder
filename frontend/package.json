@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "start": "concurrently \"npm run dev\" \"cd ../backend && npm run dev\"",
+    "start": "npm run dev",
     "build": "tsc && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
