@@ -8,7 +8,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { AudioChunk, RecordingState } from '../../types/audio';
 import { toast } from 'react-toastify';
-import { getSupportedMimeType } from '../../utils/audioFormats';
+import { getSupportedMimeType } from "../utils/audioFormats";
 
 /**
  * Configuration constants for audio recording

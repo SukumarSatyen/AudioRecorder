@@ -1,13 +1,72 @@
 /**
  * Audio recording component with chunk-based processing
  * Core component managing all audio recording and processing UI interactions
- * Related: store/slices/audioSlice.ts, utils/fileStorage.ts, backend/services/audioService.ts
+ * Related: store/audioReducer.ts, utils/fileStorage.ts, backend/services/audioService.ts
  * React components are the building blocks of React applications
  * Syntax:
  *   - MediaRecorder init: `new MediaRecorder(stream, { mimeType: 'audio/webm' })`
  *   - Blob creation: `new Blob(chunks, { type: 'audio/webm' })`
  *   - AudioContext time: `audioContext.currentTime.toFixed(3)`
  */
+
+// Keywords: [React, useState, useDispatch, useSelector, RootState, AudioChunk, startRecordingProcess, stopRecordingProcess, sendChunksToBackend, mergeChunks, AppDispatch]
+/*
+- Technical mechanics: React functional component using hooks for state management and Redux for global state. Uses Material-UI for UI components and Framer Motion for animations.
+
+- Role in the broader system:
+  - `React`: Core library for building the UI components
+  - `useState`: Local state management for dialog control
+  - `useDispatch`: Redux hook to dispatch actions to the store
+  - `useSelector`: Redux hook to access global state
+  - `RootState`: TypeScript type defining the shape of the Redux store
+  - `AudioChunk`: Interface defining the structure of audio chunks
+  - `startRecordingProcess`: Redux action to initiate recording
+  - `stopRecordingProcess`: Redux action to stop recording
+  - `sendChunksToBackend`: Redux action to send audio to server
+  - `mergeChunks`: Redux action to combine audio chunks
+  - `AppDispatch`: TypeScript type for Redux dispatch function
+
+- Edge cases or constraints: 
+  - Browser compatibility for MediaRecorder API
+  - Memory limitations for large audio files
+  - Network connectivity for backend operations
+
+- Immediate action performed: 
+  - Sets up the audio recording component
+  - Initializes Redux state connections
+  - Creates UI elements for recording controls
+
+- Dependencies/inputs:
+  - Redux store configuration
+  - Material-UI components
+  - Browser's MediaRecorder API
+  - Backend API endpoints
+
+- Outputs/state changes:
+  - Updates Redux store with recording state
+  - Manages audio chunks in memory
+  - Controls UI state for recording process
+
+- Performance considerations:
+  - Memory usage for storing audio chunks
+  - UI responsiveness during recording
+  - Efficient state updates to prevent re-renders
+
+- Security concerns:
+  - Audio data handling and storage
+  - Backend API communication security
+  - User permission management for microphone access
+
+- Scalability:
+  - Handles multiple audio chunks
+  - Manages large audio files
+  - Supports concurrent recording sessions
+
+- Error handling:
+  - MediaRecorder API errors
+  - Network request failures
+  - Permission denial handling
+*/
 
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -22,19 +81,72 @@ import {
   stopRecordingProcess, 
   sendChunksToBackend,
   mergeChunks
-} from '../store/slices/audioSlice';
+} from '../store/audioReducer';
 import { AppDispatch } from '../store';
 import config from '../config/config';
+import { AudioChunk } from '../types/audio';
 
 /**
  * Main AudioRecorder component implementation
  * Provides user interface for recording, merging, and managing audio chunks
- * Related: store/slices/audioSlice.ts, components/Navigation.tsx
+ * Related: store/audioReducer.ts, components/Navigation.tsx
  * Functional components in React use hooks to manage state and side effects
  * Syntax:
  *   - getUserMedia: `navigator.mediaDevices.getUserMedia({ audio: true })`
  *   - MediaRecorder events: `mediaRecorder.ondataavailable = (e) => chunks.push(e.data)`
  */
+
+// Keywords: [React, useState, useDispatch, useSelector, RootState, Material-UI components, Lucide icons, ToastContainer, motion, Redux actions, AppDispatch, config, AudioChunk]
+
+/*
+- Technical mechanics: Imports necessary React hooks, Redux utilities, UI components, and custom types for building the audio recorder interface.
+
+- Role in the broader system:
+  - React/useState: Core framework and state management hook for component-level state
+  - useDispatch/useSelector: Redux hooks for state management and action dispatching
+  - RootState: TypeScript type for the global Redux state
+  - Material-UI components: Provide the UI building blocks for the recorder interface
+  - Lucide icons: Supply visual icons for recorder controls
+  - ToastContainer: Handles notification display
+  - motion: Enables animations for better UX
+  - Redux actions: Handle audio recording state changes
+  - AppDispatch: TypeScript type for Redux dispatch
+  - config: Application configuration
+  - AudioChunk: Type definition for audio data chunks
+
+- Edge cases or constraints: 
+  - Material-UI theme customization limitations
+  - Redux state synchronization delays
+  - Browser compatibility for audio APIs
+
+- Immediate action performed:
+  - Makes dependencies available for use in the component
+
+- Dependencies/inputs:
+  - React and Redux core libraries
+  - Material-UI component library
+  - Various utility libraries for icons and animations
+
+- Outputs/state changes:
+  - No direct state changes, only imports
+
+- Performance considerations:
+  - Bundle size impact from multiple UI libraries
+  - Potential tree-shaking optimization needs
+
+- Security concerns:
+  - Third-party package vulnerabilities
+  - Need to validate imported configurations
+
+- Scalability:
+  - Component library supports large-scale applications
+  - Redux patterns scale well with increasing complexity
+
+- Error handling:
+  - Import failures should be caught by build system
+  - Runtime availability checks needed for browser APIs
+*/
+
 export const AudioRecorder: React.FC = () => {
   console.log('[AudioRecorder.tsx, AudioRecorder] Initializing AudioRecorder component');
   
@@ -50,6 +162,59 @@ export const AudioRecorder: React.FC = () => {
     isSending
   } = useSelector((state: RootState) => state.audio);
 
+  // Keywords: [AudioRecorder, dispatch, openDialog, isRecording, chunks, mergedAudio, error, isProcessing, recordingFinished, isSending]
+
+/*
+- Technical mechanics: Initializes component state and connects to Redux store for audio recording state management.
+
+- Role in the broader system:
+  - AudioRecorder: Main component managing audio recording functionality
+  - dispatch: Triggers Redux actions for state changes
+  - openDialog: Controls dialog visibility for chunk management
+  - isRecording: Tracks active recording state
+  - chunks: Stores recorded audio segments
+  - mergedAudio: Holds combined audio data
+  - error: Captures error states
+  - isProcessing: Indicates ongoing operations
+  - recordingFinished: Signals completion
+  - isSending: Tracks upload state
+
+- Edge cases or constraints:
+  - State synchronization delays
+  - Memory limitations for large audio chunks
+  - Browser audio API restrictions
+
+- Immediate action performed:
+  - Sets up component state
+  - Connects to Redux store
+
+- Dependencies/inputs:
+  - Redux store configuration
+  - React state hooks
+  - Browser audio APIs
+
+- Outputs/state changes:
+  - Local dialog state
+  - Access to global audio state
+
+- Performance considerations:
+  - Redux selector optimization
+  - State update frequency
+  - Memory usage for audio data
+
+- Security concerns:
+  - Audio data handling
+  - State manipulation protections
+
+- Scalability:
+  - Handles multiple recording sessions
+  - Manages growing audio chunks
+
+- Error handling:
+  - Redux error state management
+  - Component error boundaries needed
+*/
+
   console.log('[AudioRecorder.tsx, AudioRecorder] Current state:', {
     isRecording,
     chunksCount: chunks.length,
@@ -63,12 +228,84 @@ export const AudioRecorder: React.FC = () => {
   /**
    * Recording start handler
    * Initiates the audio recording process with proper state management
-   * Related: store/slices/audioSlice.ts, utils/fileStorage.ts
+   * Related: store/audioReducer.ts, utils/fileStorage.ts
    * Event handlers in React components respond to user interactions
    * Syntax:
    *   - MediaRecorder start: `mediaRecorder.start(timeslice)`
    *   - AudioContext resume: `await audioContext.resume()`
    */
+  // Handler Functions Block
+// Keywords: [handleStartRecording, handleStopRecording, handleMergeChunks, handlePlayMerged, handleOpenDialog, handleCloseDialog, handleSendChunks, canSendChunks]
+
+/*
+- Technical mechanics: Collection of event handlers managing different aspects of the audio recording process through Redux actions and local state management.
+
+- Role in the broader system:
+  - handleStartRecording: Initiates audio recording session via Redux action
+  - handleStopRecording: Terminates active recording and prepares for processing
+  - handleMergeChunks: Combines recorded audio segments into a single file
+  - handlePlayMerged: Manages audio playback using browser's Audio API
+  - handleOpenDialog: Controls dialog visibility for chunk sending UI
+  - handleCloseDialog: Manages dialog closure state
+  - handleSendChunks: Triggers backend upload of recorded audio
+  - canSendChunks: Guards against invalid state transitions in sending process
+
+- Edge cases or constraints:
+  - Browser audio API compatibility
+  - Memory limitations for large audio files
+  - Network connectivity for sending chunks
+  - Race conditions in state transitions
+  - Audio format compatibility
+
+- Immediate action performed:
+  - Recording start/stop control
+  - Audio chunk merging
+  - Playback of recorded audio
+  - Dialog state management
+  - Backend communication initiation
+
+- Dependencies/inputs:
+  - Redux dispatch function
+  - Current audio recording state
+  - Browser's Audio and MediaRecorder APIs
+  - UI state (dialog visibility)
+  - Network connectivity
+
+- Outputs/state changes:
+  - Updates to recording state
+  - Audio chunk processing state
+  - Dialog visibility changes
+  - Backend upload state
+  - Audio playback state
+
+- Performance considerations:
+  - Audio chunk size management
+  - Memory usage during merging
+  - UI responsiveness during processing
+  - Network bandwidth usage
+  - State update batching
+
+- Security concerns:
+  - Audio data handling
+  - URL.createObjectURL safety
+  - Backend API authentication
+  - User permission management
+  - Cross-origin resource sharing
+
+- Scalability:
+  - Handles multiple recording sessions
+  - Manages large audio files
+  - Supports concurrent operations
+  - Backend service scaling
+  - UI performance with many chunks
+
+- Error handling:
+  - Audio API failures
+  - Network errors
+  - Invalid state transitions
+  - Memory limitations
+  - Browser compatibility issues
+*/
   const handleStartRecording = () => {
     console.log('[AudioRecorder.tsx, handleStartRecording] Starting recording process');
     dispatch(startRecordingProcess());
@@ -77,7 +314,7 @@ export const AudioRecorder: React.FC = () => {
   /**
    * Recording stop handler
    * Finalizes the current recording session and prepares for processing
-   * Related: store/slices/audioSlice.ts, backend/services/audioService.ts
+   * Related: store/audioReducer.ts, backend/services/audioService.ts
    * Asynchronous operations in React components should be properly handled to ensure smooth user experience
    */
   const handleStopRecording = () => {
@@ -88,7 +325,7 @@ export const AudioRecorder: React.FC = () => {
   /**
    * Audio chunk merging handler
    * Combines recorded audio chunks into a single cohesive recording
-   * Related: store/slices/audioSlice.ts, backend/services/audioService.ts
+   * Related: store/audioReducer.ts, backend/services/audioService.ts
    * Complex state transformations in React use Redux
    * Syntax:
    *   - FormData append: `formData.append('audio', new Blob(chunks), 'recording.webm')`
@@ -118,6 +355,79 @@ export const AudioRecorder: React.FC = () => {
     }
   };
 
+  // UI Rendering Block
+// Keywords: [Box, Typography, Alert, Button, LinearProgress, motion, ToastContainer, progressPercentage, canMergeChunks]
+
+/*
+- Technical mechanics: Renders a Material-UI based interface with animated components and progress indicators for audio recording functionality.
+
+- Role in the broader system:
+  - Box: Container component for layout structure
+  - Typography: Text display and headings
+  - Alert: Error message display
+  - Button: User interaction controls
+  - LinearProgress: Visual feedback for recording progress
+  - motion: Animated UI elements
+  - ToastContainer: Notification system
+  - progressPercentage: Recording progress calculation
+  - canMergeChunks: State-based UI control
+
+- Edge cases or constraints:
+  - Screen size limitations
+  - Browser animation performance
+  - State synchronization delays
+  - UI responsiveness during processing
+  - Maximum chunk limit (5)
+
+- Immediate action performed:
+  - Renders recording interface
+  - Updates progress indicators
+  - Displays error states
+  - Manages button states
+  - Shows processing feedback
+
+- Dependencies/inputs:
+  - Material-UI components
+  - Framer Motion for animations
+  - Redux state values
+  - Handler functions
+  - Component state
+
+- Outputs/state changes:
+  - Visual UI updates
+  - Button state changes
+  - Progress bar updates
+  - Error message display
+  - Animation states
+
+- Performance considerations:
+  - Component re-render frequency
+  - Animation performance
+  - State update batching
+  - UI responsiveness
+  - Memory usage for animations
+
+- Security concerns:
+  - XSS in error messages
+  - State manipulation protection
+  - User input validation
+  - Safe rendering of dynamic content
+
+- Scalability:
+  - Handles multiple recording states
+  - Responsive design
+  - Component composition
+  - State management efficiency
+  - UI performance with many chunks
+
+- Error handling:
+  - Visual error feedback
+  - Graceful UI degradation
+  - Loading states
+  - Disabled states
+  - User feedback mechanisms
+*/
+
   const handleOpenDialog = () => {
     console.log('[AudioRecorder.tsx, handleOpenDialog] Opening send confirmation dialog');
     setOpenDialog(true);
@@ -131,7 +441,7 @@ export const AudioRecorder: React.FC = () => {
   /**
    * Sends recorded audio chunks to the backend for processing
    * Manages dialog state and initiates backend communication
-   * Connected to audioSlice.ts sendChunksToBackend action
+   * Connected to audioReducer.ts sendChunksToBackend action
    */
   const handleSendChunks = () => {
     console.log('[AudioRecorder.tsx, handleSendChunks] Initiating chunk send process', {
@@ -258,7 +568,7 @@ export const AudioRecorder: React.FC = () => {
       </Box>
 
       <Box sx={{ mb: 3 }}>
-        {chunks.map((chunk, index) => (
+        {chunks.map((chunk: AudioChunk, index: number) => (
           <Box
             key={chunk.id}
             sx={{
@@ -313,7 +623,7 @@ export const AudioRecorder: React.FC = () => {
         <DialogTitle>Audio Files to Send</DialogTitle>
         <DialogContent>
           <List>
-            {chunks.map((chunk, index) => (
+            {chunks.map((chunk: AudioChunk, index: number) => (
               <ListItem 
                 key={chunk.id} 
                 divider 
