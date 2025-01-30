@@ -13,7 +13,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Home } from './pages/Home';
 import { Recording } from './pages/Recording';
-import { Navigation } from './components/Navigation';
+import { Navigation } from './pages/Navigation';
 
 /**
  * Theme configuration for Material-UI

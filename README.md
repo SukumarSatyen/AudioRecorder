@@ -102,6 +102,7 @@ AWS_BUCKET_NAME=your_bucket_name
 - **I did not commit the `/config/.env` file to version control**
 - I used the provided environment variable names exactly as shown
 - I recommend that both frontend and backend must be restarted when changing environment variables
+- Github: https://github.com/SukumarSatyen/AudioRecorder.git
 
 ## Project Structure
 ### Shared Configuration
