@@ -66,11 +66,13 @@ const corsOptions = {
 };
 
 // Middleware
+console.log('[index.ts] Setting up middleware and security configurations');
 app.use(cors(corsOptions));
 app.use(express.json());
 
 // Add security headers including CSP
 app.use((req, res, next) => {
+  console.log('[index.ts, securityMiddleware] Adding security headers to request');
   res.setHeader(
     'Content-Security-Policy',
     `default-src 'self' http://localhost:${process.env.FRONTEND_PORT} http://localhost:${PORT}; ` +
@@ -79,6 +81,7 @@ app.use((req, res, next) => {
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
     "style-src 'self' 'unsafe-inline';"
   );
+  console.log('[index.ts, securityMiddleware] Security headers added successfully');
   next();
 });
 
@@ -86,15 +89,20 @@ app.use((req, res, next) => {
 app.options('*', cors(corsOptions));
 
 // Create uploads directory if it doesn't exist
+console.log('[index.ts] Checking and creating required directories');
 if (!fs.existsSync(uploadsDir)) {
+  console.log('[index.ts] Creating uploads directory:', uploadsDir);
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 if (!fs.existsSync(recordingsDir)) {
+  console.log('[index.ts] Creating recordings directory:', recordingsDir);
   fs.mkdirSync(recordingsDir, { recursive: true });
 }
 if (!fs.existsSync(publicDir)) {
+  console.log('[index.ts] Creating public directory:', publicDir);
   fs.mkdirSync(publicDir, { recursive: true });
 }
+console.log('[index.ts] Directory checks and creation completed');
 
 /**
  * Static file serving configuration
@@ -111,27 +119,34 @@ const staticOptions = {
 
 // Function to get content type from file path
 function getContentType(filePath: string) {
+  console.log('[index.ts, getContentType] Getting content type for:', filePath);
   const ext = path.extname(filePath).toLowerCase();
-  switch (ext) {
-    case '.mp3':
-      return 'audio/mpeg';
-    case '.wav':
-      return 'audio/wav';
-    case '.ogg':
-      return 'audio/ogg';
-    case '.webm':
-      return 'audio/webm';
-    default:
-      return 'application/octet-stream';
-  }
+  const contentType = (() => {
+    switch (ext) {
+      case '.mp3':
+        return 'audio/mpeg';
+      case '.wav':
+        return 'audio/wav';
+      case '.ogg':
+        return 'audio/ogg';
+      case '.webm':
+        return 'audio/webm';
+      default:
+        return 'application/octet-stream';
+    }
+  })();
+  console.log('[index.ts, getContentType] Determined content type:', contentType);
+  return contentType;
 }
 
 // Serve static files with proper MIME types
+console.log('[index.ts] Setting up static file serving');
 app.use(express.static(publicDir, {
   setHeaders: (res, path) => {
-    // Set appropriate headers for audio files
+    console.log('[index.ts, staticServe.setHeaders] Setting headers for:', path);
     const contentType = getContentType(path);
     if (contentType.startsWith('audio/')) {
+      console.log('[index.ts, staticServe.setHeaders] Setting audio-specific headers');
       res.set('Content-Type', contentType);
       res.set('Accept-Ranges', 'bytes');
     }
@@ -140,9 +155,10 @@ app.use(express.static(publicDir, {
 
 app.use('/uploads', express.static(uploadsDir, {
   setHeaders: (res, path) => {
-    // Set appropriate headers for audio files
+    console.log('[index.ts, staticServe.setHeaders] Setting headers for:', path);
     const contentType = getContentType(path);
     if (contentType.startsWith('audio/')) {
+      console.log('[index.ts, staticServe.setHeaders] Setting audio-specific headers');
       res.set('Content-Type', contentType);
       res.set('Accept-Ranges', 'bytes');
     }
@@ -156,22 +172,24 @@ app.use('/uploads', express.static(uploadsDir, {
  * Debugging routes help identify issues in production by exposing system state and configuration details
  */
 app.get('/debug/files', (req, res) => {
+  console.log('[index.ts, debugFiles] Starting debug files endpoint');
   try {
-    console.log('Debug: Checking directories');
-    console.log('__dirname:', __dirname);
-    console.log('uploadsDir:', uploadsDir);
-    console.log('recordingsDir:', recordingsDir);
+    console.log('[index.ts, debugFiles] Checking directories');
+    console.log('[index.ts, debugFiles] __dirname:', __dirname);
+    console.log('[index.ts, debugFiles] uploadsDir:', uploadsDir);
+    console.log('[index.ts, debugFiles] recordingsDir:', recordingsDir);
     
     const uploadsExists = fs.existsSync(uploadsDir);
     const recordingsExists = fs.existsSync(recordingsDir);
     
     let recordings: string[] = [];
     if (recordingsExists) {
+      console.log('[index.ts, debugFiles] Reading recordings directory');
       recordings = fs.readdirSync(recordingsDir);
-      console.log('Recordings found:', recordings);
+      console.log('[index.ts, debugFiles] Recordings found:', recordings);
     }
     
-    res.json({
+    const response = {
       directories: {
         __dirname,
         uploadsDir,
@@ -186,17 +204,22 @@ app.get('/debug/files', (req, res) => {
         size: fs.existsSync(path.join(recordingsDir, file)) ? 
           fs.statSync(path.join(recordingsDir, file)).size : 0
       }))
-    });
+    };
+    
+    console.log('[index.ts, debugFiles] Sending debug response');
+    res.json(response);
   } catch (error) {
-    console.error('Debug route error:', error);
+    console.error('[index.ts, debugFiles] Error in debug route:', error);
     res.status(500).json({ error: String(error) });
   }
 });
 
 // Serve README.md as HTML at root endpoint
 app.get('/', (req, res) => {
+  console.log('[index.ts, serveReadme] Starting to serve README.md');
   try {
     const readmePath = path.join(__dirname, '..', 'README.md');
+    console.log('[index.ts, serveReadme] Reading README from:', readmePath);
     const readmeContent = fs.readFileSync(readmePath, 'utf-8');
     const htmlContent = `
       <!DOCTYPE html>
@@ -245,9 +268,10 @@ app.get('/', (req, res) => {
         </body>
       </html>
     `;
+    console.log('[index.ts, serveReadme] Serving README as HTML');
     res.send(htmlContent);
   } catch (error) {
-    console.error('Error serving README:', error);
+    console.error('[index.ts, serveReadme] Error serving README:', error);
     res.status(500).send('Error loading documentation');
   }
 });
@@ -257,27 +281,31 @@ app.use('/api/audio', audioRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
+  console.error('[index.ts, errorHandler] Error occurred:', err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
 // Function to start the server with port conflict handling
-const startServer = async (retries = 3) => {
+async function startServer(retries = 3) {
+  console.log('[index.ts, startServer] Starting server with retries:', retries);
   try {
+    console.log('[index.ts, startServer] Attempting to start server on port:', PORT);
     app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-      console.log(`View documentation at http://localhost:${PORT}`);
+      console.log('[index.ts, startServer] Server started successfully');
+      console.log('[index.ts, startServer] Server is running on port:', PORT);
+      console.log('[index.ts, startServer] Frontend URL:', FRONTEND_URL);
     });
-  } catch (error: any) {
+  } catch (error) {
+    console.error('[index.ts, startServer] Error starting server:', error);
     if (error.code === 'EADDRINUSE' && retries > 0) {
-      console.log(`Port ${PORT} is in use, trying port ${PORT + 1}`);
+      console.log('[index.ts, startServer] Port', PORT, 'is in use, trying port', PORT + 1);
       process.env.BACKEND_PORT = String(PORT + 1);
       await startServer(retries - 1);
     } else {
-      console.error('Failed to start server:', error);
+      console.error('[index.ts, startServer] Failed to start server after all retries');
       process.exit(1);
     }
   }
-};
+}
 
 startServer();
