@@ -80,11 +80,14 @@ export const saveRecordedAudio = async (
     recordedChunks: BlobPart[],
     mimeType: string = 'audio/webm'
 ): Promise<StorageResult> => {
+    console.log('[fileStorage.ts, saveRecordedAudio] Starting audio save process');
+    
     /**
      * Create a new Blob instance from the recorded chunks
      * The type property ensures proper audio format handling
      */
     const blob = new Blob(recordedChunks, { type: mimeType });
+    console.log('[fileStorage.ts, saveRecordedAudio] Created blob with size:', blob.size, 'bytes');
     
     /**
      * Generate a unique filename using current timestamp
@@ -93,13 +96,16 @@ export const saveRecordedAudio = async (
      */
     const extension = getFileExtension(mimeType);
     const filename = `recording-${Date.now()}${extension}`;
+    console.log('[fileStorage.ts, saveRecordedAudio] Generated filename:', filename);
 
     /**
      * First Storage Attempt: File System Access API
      * Check if the API is supported before attempting to use it
      */
     if (hasFileSystemAccess()) {
+        console.log('[fileStorage.ts, saveRecordedAudio] File System Access API available');
         try {
+            console.log('[fileStorage.ts, saveRecordedAudio] Showing save file picker');
             const handle = await window.showSaveFilePicker({
                 suggestedName: filename,
                 types: [{
@@ -109,8 +115,15 @@ export const saveRecordedAudio = async (
                     }
                 }]
             });
+            console.log('[fileStorage.ts, saveRecordedAudio] File handle obtained:', handle.name);
+
+            console.log('[fileStorage.ts, saveRecordedAudio] Creating writable stream');
             const writable = await handle.createWritable();
+            
+            console.log('[fileStorage.ts, saveRecordedAudio] Writing blob to file');
             await writable.write(blob);
+            
+            console.log('[fileStorage.ts, saveRecordedAudio] Closing file stream');
             await writable.close();
 
             /**
@@ -120,24 +133,23 @@ export const saveRecordedAudio = async (
              * Notifies user of both save locations
              */
             try {
+                console.log('[fileStorage.ts, saveRecordedAudio] Attempting server backup');
                 await uploadToServer(blob, filename);
                 toast.success('Audio saved both locally and to server');
+                console.log('[fileStorage.ts, saveRecordedAudio] Server backup successful');
             } catch (serverError) {
                 toast.info('Audio saved locally only');
-                console.warn('Server backup failed:', serverError);
+                console.warn('[fileStorage.ts, saveRecordedAudio] Server backup failed:', serverError);
             }
 
+            console.log('[fileStorage.ts, saveRecordedAudio] Local save completed successfully');
             return {
                 success: true,
                 localPath: handle.name
             };
         } catch (error) {
-            console.warn('File System API failed, falling back to Electron or server:', error);
-            /**
-             * Graceful Degradation:
-             * If File System API fails, code continues to next approach
-             * No explicit error return - allows fallback to proceed
-             */
+            console.warn('[fileStorage.ts, saveRecordedAudio] File System API failed:', error);
+            console.log('[fileStorage.ts, saveRecordedAudio] Falling back to Electron or server');
         }
     }
 
@@ -155,10 +167,13 @@ export const saveRecordedAudio = async (
      * @returns {boolean} True if running in Electron, false otherwise
      */
     const isElectron = (): boolean => {
-        return window && 
+        console.log('[fileStorage.ts, isElectron] Checking if running in Electron environment');
+        const result = window && 
                'process' in window && 
                (window as any).process && 
                (window as any).process.type === 'renderer';
+        console.log('[fileStorage.ts, isElectron] Result:', result);
+        return result;
     };
 
     /**
@@ -186,33 +201,38 @@ export const saveRecordedAudio = async (
      * Electron file saving utilities handle native file system operations and provide a consistent interface
      */
     const saveWithElectron = async (blob: Blob, filename: string): Promise<string> => {
-        // Validate Electron environment before proceeding
+        console.log('[fileStorage.ts, saveWithElectron] Starting Electron save process');
+        
         if (!isElectron()) {
+            console.error('[fileStorage.ts, saveWithElectron] Not in Electron environment');
             throw new Error('Not running in Electron environment');
         }
 
-        // Dynamically import Electron modules using type assertions for TypeScript
+        console.log('[fileStorage.ts, saveWithElectron] Loading Electron modules');
         const { dialog } = (window as any).require('electron').remote;
         const fs = (window as any).require('fs').promises;
 
         try {
-            // Show native save dialog with audio file type filter
+            console.log('[fileStorage.ts, saveWithElectron] Showing save dialog');
             const result = await dialog.showSaveDialog({
                 title: 'Save Recording',
                 defaultPath: filename,
                 filters: [{ name: 'Audio Files', extensions: [extension] }]
             });
 
-            // Process save dialog result
+            console.log('[fileStorage.ts, saveWithElectron] Processing save dialog result');
             if (!result.canceled && result.filePath) {
-                // Convert Blob to Buffer for file system writing
+                console.log('[fileStorage.ts, saveWithElectron] Converting blob to buffer');
                 const buffer = await blob.arrayBuffer();
+                console.log('[fileStorage.ts, saveWithElectron] Writing buffer to file');
                 await fs.writeFile(result.filePath, Buffer.from(buffer));
+                console.log('[fileStorage.ts, saveWithElectron] File saved successfully');
                 return result.filePath;
             }
+            console.error('[fileStorage.ts, saveWithElectron] Save dialog was canceled');
             throw new Error('Save dialog was canceled');
         } catch (error: unknown) {
-            // Handle errors with proper type checking
+            console.error('[fileStorage.ts, saveWithElectron] Electron save failed:', error);
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
             throw new Error(`Electron save failed: ${errorMessage}`);
         }
@@ -221,23 +241,27 @@ export const saveRecordedAudio = async (
     // Try Electron file system if available
     if (isElectron()) {
         try {
+            console.log('[fileStorage.ts, saveRecordedAudio] Attempting Electron save');
             const localPath = await saveWithElectron(blob, filename);
             
             // Also try server backup if possible
             try {
+                console.log('[fileStorage.ts, saveRecordedAudio] Attempting server backup');
                 await uploadToServer(blob, filename);
                 toast.success('Audio saved both locally and to server');
+                console.log('[fileStorage.ts, saveRecordedAudio] Server backup successful');
             } catch (serverError) {
                 toast.info('Audio saved locally only');
-                console.warn('Server backup failed:', serverError);
+                console.warn('[fileStorage.ts, saveRecordedAudio] Server backup failed:', serverError);
             }
 
+            console.log('[fileStorage.ts, saveRecordedAudio] Electron save completed successfully');
             return {
                 success: true,
                 localPath
             };
         } catch (electronError) {
-            console.warn('Electron save failed, falling back to server:', electronError);
+            console.warn('[fileStorage.ts, saveRecordedAudio] Electron save failed, falling back to server:', electronError);
             // Fall through to server upload
         }
     }
@@ -254,15 +278,18 @@ export const saveRecordedAudio = async (
      *   - Progress event: `xhr.upload.onprogress = (e) => e.loaded / e.total`
      */
     try {
+        console.log('[fileStorage.ts, saveRecordedAudio] Attempting server upload');
         const result = await uploadToServer(blob, filename);
         toast.success('Audio saved to server');
+        console.log('[fileStorage.ts, saveRecordedAudio] Server upload successful');
         return {
             success: true,
             key: result.key
         };
     } catch (error) {
-        console.error('All storage methods failed:', error);
+        console.error('[fileStorage.ts, saveRecordedAudio] All storage methods failed:', error);
         toast.error('Failed to save audio file');
+        console.log('[fileStorage.ts, saveRecordedAudio] Error:', error);
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error occurred'
@@ -278,21 +305,32 @@ export const saveRecordedAudio = async (
  * Related: components/AudioRecorder.tsx, store/slices/audioSlice.ts
  * Server upload utilities handle cloud storage operations and provide a consistent interface
  */
-async function uploadToServer(blob: Blob, filename: string): Promise<{ key: string }> {
-    const formData = new FormData();
-    formData.append('audio', blob, filename);
+export const uploadToServer = async (blob: Blob, filename: string): Promise<{ key: string }> => {
+    console.log('[fileStorage.ts, uploadToServer] Starting server upload', { filename });
+    
+    try {
+        console.log('[fileStorage.ts, uploadToServer] Creating form data');
+        const formData = new FormData();
+        formData.append('audio', blob, filename);
 
-    const response = await fetch('http://localhost:3001/audio/add', {
-        method: 'POST',
-        body: formData
-    });
+        console.log('[fileStorage.ts, uploadToServer] Sending POST request to server');
+        const response = await fetch('http://localhost:3001/audio/add', {
+            method: 'POST',
+            body: formData
+        });
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details || 'Failed to upload to server');
+        if (!response.ok) {
+            console.error('[fileStorage.ts, uploadToServer] Server response not OK:', response.status);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        console.log('[fileStorage.ts, uploadToServer] Upload successful');
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('[fileStorage.ts, uploadToServer] Upload failed:', error);
+        throw error;
     }
-
-    return response.json();
 };
 
 /**
@@ -304,7 +342,10 @@ async function uploadToServer(blob: Blob, filename: string): Promise<{ key: stri
  * Browser capability detection utilities handle feature detection and provide a consistent interface
  */
 export function hasFileSystemAccess(): boolean {
-    return typeof window !== 'undefined' && 
+    console.log('[fileStorage.ts, hasFileSystemAccess] Checking File System Access API support');
+    const hasAccess = typeof window !== 'undefined' && 
            'showSaveFilePicker' in window &&
            typeof window.showSaveFilePicker === 'function';
+    console.log('[fileStorage.ts, hasFileSystemAccess] Support status:', hasAccess);
+    return hasAccess;
 };

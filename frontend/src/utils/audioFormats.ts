@@ -24,9 +24,21 @@ export const FILE_EXTENSIONS: Record<BaseAudioMimeType, string> = {
  * @returns {string} The supported MIME type or default to webm
  */
 export const getSupportedMimeType = (): string => {
-    return Object.values(SUPPORTED_AUDIO_FORMATS).find(
+    console.log('[audioFormats.ts, getSupportedMimeType] Starting MIME type detection');
+    
+    const supportedType = Object.values(SUPPORTED_AUDIO_FORMATS).find(
         type => MediaRecorder.isTypeSupported(type)
-    ) || SUPPORTED_AUDIO_FORMATS.WEBM;
+    );
+    
+    if (supportedType) {
+        console.log('[audioFormats.ts, getSupportedMimeType] Found supported MIME type:', supportedType);
+    } else {
+        console.log('[audioFormats.ts, getSupportedMimeType] No supported types found, using default WEBM');
+    }
+    
+    const result = supportedType || SUPPORTED_AUDIO_FORMATS.WEBM;
+    console.log('[audioFormats.ts, getSupportedMimeType] Returning MIME type:', result);
+    return result;
 };
 
 /**
@@ -35,8 +47,15 @@ export const getSupportedMimeType = (): string => {
  * @returns {string} The corresponding file extension
  */
 export const getFileExtension = (mimeType: string): string => {
+    console.log('[audioFormats.ts, getFileExtension] Starting with MIME type:', mimeType);
+    
+    console.log('[audioFormats.ts, getFileExtension] Extracting base MIME type');
     const baseType = mimeType.split(';')[0] as BaseAudioMimeType; // Remove codecs info if present
-    return FILE_EXTENSIONS[baseType] || '.webm';
+    
+    const extension = FILE_EXTENSIONS[baseType] || '.webm';
+    console.log('[audioFormats.ts, getFileExtension] Determined file extension:', extension);
+    
+    return extension;
 };
 
 /**
@@ -45,9 +64,18 @@ export const getFileExtension = (mimeType: string): string => {
  * @returns {string} The corresponding content type
  */
 export const getContentType = (filename: string): string => {
+    console.log('[audioFormats.ts, getContentType] Starting with filename:', filename);
+    
+    console.log('[audioFormats.ts, getContentType] Extracting file extension');
     const ext = filename.toLowerCase().split('.').pop();
+    console.log('[audioFormats.ts, getContentType] Extracted extension:', ext);
+    
     const mimeTypes = Object.entries(FILE_EXTENSIONS).find(
         ([_, extension]) => extension.slice(1) === ext
     );
-    return mimeTypes ? mimeTypes[0] : 'application/octet-stream';
+    
+    const contentType = mimeTypes ? mimeTypes[0] : 'application/octet-stream';
+    console.log('[audioFormats.ts, getContentType] Determined content type:', contentType);
+    
+    return contentType;
 };
