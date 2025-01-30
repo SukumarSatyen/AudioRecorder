@@ -15,9 +15,14 @@ interface FrontendAudioFormatProps {
 }
 
 const FrontendAudioFormat: React.FC<FrontendAudioFormatProps> = ({ onFormatsDetected }) => {
+    console.log('[FrontendAudioFormat.tsx, FrontendAudioFormat] Initializing FrontendAudioFormat component');
+
     useEffect(() => {
+        console.log('[FrontendAudioFormat.tsx, useEffect] Starting format detection');
+        
         const getSupportedAudioFormats = async (): Promise<SupportedAudioFormat[]> => {
-            // Define the audio formats to check
+            console.log('[FrontendAudioFormat.tsx, getSupportedAudioFormats] Checking supported audio formats');
+            
             const formats: AudioFormat[] = [
                 { mimeType: 'audio/mpeg', codecs: 'mp3' },
                 { mimeType: 'audio/ogg; codecs=opus', codecs: 'opus' },
@@ -25,9 +30,16 @@ const FrontendAudioFormat: React.FC<FrontendAudioFormatProps> = ({ onFormatsDete
                 { mimeType: 'audio/mp4; codecs=aac', codecs: 'aac' }
             ];
 
+            console.log('[FrontendAudioFormat.tsx, getSupportedAudioFormats] Testing formats:', formats);
+
             const supported = formats
                 .map(format => {
                     const canPlay = document.createElement('audio').canPlayType(format.mimeType);
+                    console.log('[FrontendAudioFormat.tsx, getSupportedAudioFormats] Testing format:', {
+                        format: format.mimeType,
+                        support: canPlay
+                    });
+                    
                     if (canPlay === "probably" || canPlay === "maybe") {
                         return {
                             ...format,
@@ -39,7 +51,10 @@ const FrontendAudioFormat: React.FC<FrontendAudioFormatProps> = ({ onFormatsDete
                 })
                 .filter((format): format is SupportedAudioFormat => format !== null);
 
+            console.log('[FrontendAudioFormat.tsx, getSupportedAudioFormats] Supported formats found:', supported.length);
+
             if (supported.length === 0) {
+                console.warn('[FrontendAudioFormat.tsx, getSupportedAudioFormats] No supported audio formats found');
                 return [{
                     mimeType: 'No supported audio format found',
                     codecs: 'No supported audio format found',
@@ -51,13 +66,16 @@ const FrontendAudioFormat: React.FC<FrontendAudioFormatProps> = ({ onFormatsDete
             return supported;
         };
 
-        // Get supported formats and notify parent
-        getSupportedAudioFormats().then(formats => {
-            onFormatsDetected(formats);
-        });
+        getSupportedAudioFormats()
+            .then(formats => {
+                console.log('[FrontendAudioFormat.tsx, useEffect] Detected formats:', formats);
+                onFormatsDetected(formats);
+            })
+            .catch(error => {
+                console.error('[FrontendAudioFormat.tsx, useEffect] Error detecting formats:', error);
+            });
     }, [onFormatsDetected]);
 
-    // Child doesn't render anything
     return null;
 };
 

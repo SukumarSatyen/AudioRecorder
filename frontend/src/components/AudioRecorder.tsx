@@ -36,6 +36,8 @@ import config from '../config/config';
  *   - MediaRecorder events: `mediaRecorder.ondataavailable = (e) => chunks.push(e.data)`
  */
 export const AudioRecorder: React.FC = () => {
+  console.log('[AudioRecorder.tsx, AudioRecorder] Initializing AudioRecorder component');
+  
   const dispatch = useDispatch<AppDispatch>();
   const [openDialog, setOpenDialog] = useState(false);
   const { 
@@ -48,6 +50,16 @@ export const AudioRecorder: React.FC = () => {
     isSending
   } = useSelector((state: RootState) => state.audio);
 
+  console.log('[AudioRecorder.tsx, AudioRecorder] Current state:', {
+    isRecording,
+    chunksCount: chunks.length,
+    hasMergedAudio: !!mergedAudio,
+    error,
+    isProcessing,
+    recordingFinished,
+    isSending
+  });
+
   /**
    * Recording start handler
    * Initiates the audio recording process with proper state management
@@ -58,6 +70,7 @@ export const AudioRecorder: React.FC = () => {
    *   - AudioContext resume: `await audioContext.resume()`
    */
   const handleStartRecording = () => {
+    console.log('[AudioRecorder.tsx, handleStartRecording] Starting recording process');
     dispatch(startRecordingProcess());
   };
 
@@ -68,6 +81,7 @@ export const AudioRecorder: React.FC = () => {
    * Asynchronous operations in React components should be properly handled to ensure smooth user experience
    */
   const handleStopRecording = () => {
+    console.log('[AudioRecorder.tsx, handleStopRecording] Stopping recording process');
     dispatch(stopRecordingProcess());
   };
 
@@ -81,6 +95,9 @@ export const AudioRecorder: React.FC = () => {
    *   - Chunk conversion: `chunks.map(chunk => new Uint8Array(chunk))`
    */
   const handleMergeChunks = () => {
+    console.log('[AudioRecorder.tsx, handleMergeChunks] Starting chunk merge process', {
+      numberOfChunks: chunks.length
+    });
     dispatch(mergeChunks());
   };
 
@@ -90,17 +107,24 @@ export const AudioRecorder: React.FC = () => {
    * Uses browser's native Audio API for playback
    */
   const handlePlayMerged = () => {
+    console.log('[AudioRecorder.tsx, handlePlayMerged] Attempting to play merged audio');
     if (mergedAudio) {
+      console.log('[AudioRecorder.tsx, handlePlayMerged] Creating audio blob URL for playback');
       const audio = new Audio(URL.createObjectURL(mergedAudio));
       audio.play();
+      console.log('[AudioRecorder.tsx, handlePlayMerged] Audio playback started');
+    } else {
+      console.log('[AudioRecorder.tsx, handlePlayMerged] No merged audio available for playback');
     }
   };
 
   const handleOpenDialog = () => {
+    console.log('[AudioRecorder.tsx, handleOpenDialog] Opening send confirmation dialog');
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
+    console.log('[AudioRecorder.tsx, handleCloseDialog] Closing send confirmation dialog');
     setOpenDialog(false);
   };
 
@@ -110,6 +134,9 @@ export const AudioRecorder: React.FC = () => {
    * Connected to audioSlice.ts sendChunksToBackend action
    */
   const handleSendChunks = () => {
+    console.log('[AudioRecorder.tsx, handleSendChunks] Initiating chunk send process', {
+      numberOfChunks: chunks.length
+    });
     setOpenDialog(false);
     dispatch(sendChunksToBackend());
   };

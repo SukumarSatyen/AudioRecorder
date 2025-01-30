@@ -18,6 +18,8 @@ interface AudioRecorderType {
 
 // Define the Frontend component as a functional component.
 const Frontend: React.FC = () => {
+  console.log('[Frontend.tsx, Frontend] Initializing Frontend component');
+  
   // Initialize state variables to manage the recording process.
   const [recorder, setRecorder] = useState<AudioRecorderType | null>(null)
   const [isRecording, setIsRecording] = useState(false)
@@ -30,9 +32,18 @@ const Frontend: React.FC = () => {
     null
   )
 
+  console.log('[Frontend.tsx, Frontend] Initial state:', {
+    hasRecorder: !!recorder,
+    isRecording,
+    supportedFormatsCount: supportedFormats.length,
+    selectedFormat: selectedFormat?.mimeType,
+    browserSupport: browserSupport?.isModernBrowser ? 'Modern' : 'Legacy'
+  });
+
   // Define a callback function to handle the detection of supported audio formats.
   const handleFormatsDetected = useCallback(
     (formats: SupportedAudioFormat[]) => {
+      console.log('[Frontend.tsx, handleFormatsDetected] Detected audio formats:', formats);
       // Update the supportedFormats state with the detected formats.
       setSupportedFormats(formats)
       // Select the first supported format as the default format.
@@ -40,6 +51,7 @@ const Frontend: React.FC = () => {
         (format) => format.mimeType !== "No supported audio format found"
       )
       setSelectedFormat(defaultFormat || null)
+      console.log('[Frontend.tsx, handleFormatsDetected] Selected default format:', defaultFormat);
       // Log the detected formats to the console for debugging purposes.
       console.log("Detected formats:", formats)
       // Display a toast notification to inform the user about the detected formats.
@@ -53,6 +65,10 @@ const Frontend: React.FC = () => {
 
   // Define a callback function to handle the detection of browser support.
   const handleBrowserDetected = useCallback((support: BrowserSupport) => {
+    console.log('[Frontend.tsx, handleBrowserDetected] Browser support detected:', {
+      isModernBrowser: support.isModernBrowser,
+      details: support
+    });
     // Update the browserSupport state with the detected support.
     setBrowserSupport(support)
     // Log the detected browser support to the console for debugging purposes.
@@ -71,27 +87,39 @@ const Frontend: React.FC = () => {
   async function initializeMediaRecorder(
     selectedFormat: any
   ): Promise<MediaRecorder> {
-    // Request access to the user's microphone.
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-    })
+    console.log('[Frontend.tsx, initializeMediaRecorder] Initializing media recorder with format:', selectedFormat?.mimeType);
+    try {
+      // Request access to the user's microphone.
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      })
+      console.log('[Frontend.tsx, initializeMediaRecorder] Audio stream obtained successfully');
 
-    // Create a new media recorder instance with the selected format.
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: selectedFormat?.mimeType || "audio/webm",
-    })
+      // Create a new media recorder instance with the selected format.
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: selectedFormat?.mimeType || "audio/webm",
+      })
+      console.log('[Frontend.tsx, initializeMediaRecorder] MediaRecorder created successfully');
 
-    // Initialize an array to store audio chunks.
-    const audioChunks: Blob[] = []
+      // Initialize an array to store audio chunks.
+      const audioChunks: Blob[] = []
 
-    // Add an event listener to the media recorder to handle data availability.
-    mediaRecorder.addEventListener("dataavailable", (event) => {
-      // Push the available data to the audio chunks array.
-      audioChunks.push(event.data)
-    })
+      // Add an event listener to the media recorder to handle data availability.
+      mediaRecorder.addEventListener("dataavailable", (event) => {
+        console.log('[Frontend.tsx, initializeMediaRecorder.dataavailable] New audio chunk received:', {
+          size: event.data.size
+        });
+        // Push the available data to the audio chunks array.
+        audioChunks.push(event.data)
+      })
 
-    // Return the media recorder instance.
-    return mediaRecorder
+      // Return the media recorder instance.
+      return mediaRecorder
+    } catch (error) {
+      console.error('[Frontend.tsx, initializeMediaRecorder] Error initializing media recorder:', error);
+      // Log any errors that occur during the recording process to the console.
+      throw error
+    }
   }
 
   // Define a new function to create an audio blob and return the audio element and blob.
@@ -99,6 +127,11 @@ const Frontend: React.FC = () => {
     audioChunks: Blob[],
     selectedFormat: any
   ): { audioBlob: Blob; audio: HTMLAudioElement } => {
+    console.log('[Frontend.tsx, createAudioBlob] Creating audio blob', {
+      chunksCount: audioChunks.length,
+      format: selectedFormat?.mimeType
+    });
+    
     // Create a new blob from the audio chunks array.
     const audioBlob = new Blob([], {
       type: selectedFormat?.mimeType || "audio/webm",
@@ -108,15 +141,18 @@ const Frontend: React.FC = () => {
     // Create a new audio element to play the recorded audio.
     const audio = new Audio(audioUrl)
 
+    console.log('[Frontend.tsx, createAudioBlob] Audio blob created successfully');
     // Return the audio blob and audio element.
     return { audioBlob, audio }
   }
 
   // Define an asynchronous function to handle the recording process.
   const doRecordAudio = async (): Promise<AudioRecorderType> => {
+    console.log('[Frontend.tsx, doRecordAudio] Starting audio recording process');
     try {
       // Check if the browser supports the getUserMedia API.
       if (!navigator.mediaDevices?.getUserMedia) {
+        console.error('[Frontend.tsx, doRecordAudio] Browser does not support getUserMedia');
         // Throw an error if the browser does not support the getUserMedia API.
         throw new Error("Your browser does not support audio recording")
       }
@@ -126,6 +162,7 @@ const Frontend: React.FC = () => {
 
       // Define the start method to start the recording process.
       const start = (): void => {
+        console.log('[Frontend.tsx, doRecordAudio.start] Starting recording');
         // Set the isRecording state to true.
         setIsRecording(true)
         // Start the media recorder.
@@ -134,14 +171,17 @@ const Frontend: React.FC = () => {
 
       // Define the stop method to stop the recording process.
       const stop = (): Promise<{ audioBlob: Blob; play: () => void }> => {
+        console.log('[Frontend.tsx, doRecordAudio.stop] Stopping recording');
         return new Promise((resolve) => {
           // Add an event listener to the media recorder to handle the stop event.
           mediaRecorder.addEventListener("stop", () => {
+            console.log('[Frontend.tsx, doRecordAudio.stop] Recording stopped');
             // Set the isRecording state to false.
             setIsRecording(false)
 
             // Call createAudioBlob to get the audio blob and audio element.
             const { audioBlob, audio } = createAudioBlob([], selectedFormat)
+            console.log('[Frontend.tsx, doRecordAudio.stop] Audio blob created for playback');
 
             // Resolve the promise with the recorded audio blob and the play function.
             /*
@@ -153,7 +193,10 @@ const Frontend: React.FC = () => {
                         */
             resolve({
               audioBlob,
-              play: () => audio.play(),
+              play: () => {
+                console.log('[Frontend.tsx, doRecordAudio.play] Playing recorded audio');
+                audio.play()
+              },
             })
           })
 
@@ -165,6 +208,7 @@ const Frontend: React.FC = () => {
       // Return the start and stop methods as an object.
       return { start, stop }
     } catch (error) {
+      console.error('[Frontend.tsx, doRecordAudio] Error in recording process:', error);
       // Log any errors that occur during the recording process to the console.
       console.error("Error accessing microphone:", error)
       // Display a toast notification to inform the user of any errors that occurred.

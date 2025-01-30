@@ -33,6 +33,8 @@ const theme = createTheme({
   },
 });
 
+console.log('[App.tsx] Theme created with configuration:', { mode: theme.palette.mode });
+
 /**
  * Main App component implementation
  * Wraps the application with necessary providers and routing
@@ -40,6 +42,8 @@ const theme = createTheme({
  * React applications typically have a root component that sets up the application context and routing structure
  */
 function App() {
+  console.log('[App.tsx, App] Starting App component initialization');
+  
   return (
     <Provider store={store}>
       <ThemeProvider theme={theme}>
@@ -55,5 +59,7 @@ function App() {
     </Provider>
   );
 }
+
+console.log('[App.tsx] App component defined and ready');
 
 export default App;
