@@ -40,6 +40,24 @@ const Frontend: React.FC = () => {
     browserSupport: browserSupport?.isModernBrowser ? 'Modern' : 'Legacy'
   });
 
+  /*
+  Keywords: [const, useState, setRecorder, setIsRecording, setSupportedFormats, setSelectedFormat, setBrowserSupport]
+
+  Technical: Initializes state variables for managing the audio recording process, including recorder instance, recording status, supported audio formats, selected format, and browser support.
+  Role:  
+    - const: Declares constants for state variables, ensuring they are immutable.
+    - useState: React hook that allows functional components to manage state.
+    - setRecorder, setIsRecording, setSupportedFormats, setSelectedFormat, setBrowserSupport: Functions to update the respective state variables.
+  Constraints: State updates may be asynchronous, leading to potential stale state if not handled correctly.
+  Actions: Initializes state variables to manage the recording process.
+  Dependencies: Relies on the React library for state management.
+  Outputs: Sets initial values for state variables used throughout the component.
+  Performance: State updates can cause re-renders; optimizing state management is crucial for performance.
+  Security: No direct security concerns in state initialization, but state values should be validated before use.
+  Scalability: The state management approach scales well with additional features, but careful consideration is needed for complex state interactions.
+  Errors: Errors in state updates are generally handled by React, but custom error handling may be needed for specific cases.
+  */
+
   // Define a callback function to handle the detection of supported audio formats.
   const handleFormatsDetected = useCallback(
     (formats: SupportedAudioFormat[]) => {
@@ -63,6 +81,24 @@ const Frontend: React.FC = () => {
     []
   )
 
+  /*
+  Keywords: [const, handleFormatsDetected, useCallback, setSupportedFormats, setSelectedFormat]
+
+  Technical: Defines a callback function that updates the state with detected audio formats and sets a default format.
+  Role:  
+    - const: Declares a constant for the callback function.
+    - useCallback: React hook that memoizes the function, preventing unnecessary re-creations.
+    - setSupportedFormats, setSelectedFormat: Functions to update the respective state variables.
+  Constraints: The function may not work correctly if formats are not detected or if the input is invalid.
+  Actions: Updates the supported formats and selects a default format based on detection results.
+  Dependencies: Relies on the React library and the toast notification library.
+  Outputs: Updates the component state with supported formats and triggers a toast notification.
+  Performance: Memoization helps improve performance by preventing unnecessary renders.
+  Security: No direct security concerns, but input validation is essential.
+  Scalability: The function can handle various formats, but may need enhancements for more complex format handling.
+  Errors: Errors in format detection should be handled gracefully, possibly by notifying the user.
+  */
+
   // Define a callback function to handle the detection of browser support.
   const handleBrowserDetected = useCallback((support: BrowserSupport) => {
     console.log('[Frontend.tsx, handleBrowserDetected] Browser support detected:', {
@@ -82,6 +118,24 @@ const Frontend: React.FC = () => {
       autoClose: 3000,
     })
   }, [])
+
+  /*
+  Keywords: [const, handleBrowserDetected, useCallback, setBrowserSupport]
+
+  Technical: Defines a callback function that updates the state with detected browser support information.
+  Role:  
+    - const: Declares a constant for the callback function.
+    - useCallback: React hook that memoizes the function, preventing unnecessary re-creations.
+    - setBrowserSupport: Function to update the browser support state variable.
+  Constraints: The function may not work correctly if the support information is not provided or is invalid.
+  Actions: Updates the browser support state and triggers a toast notification.
+  Dependencies: Relies on the React library and the toast notification library.
+  Outputs: Updates the component state with browser support information and triggers a toast notification.
+  Performance: Memoization helps improve performance by preventing unnecessary renders.
+  Security: No direct security concerns, but input validation is essential.
+  Scalability: The function can handle various browser support scenarios but may need enhancements for more complex support checks.
+  Errors: Errors in browser detection should be handled gracefully, possibly by notifying the user.
+  */
 
   // Define an asynchronous function to initialize the media recorder.
   async function initializeMediaRecorder(
@@ -122,6 +176,26 @@ const Frontend: React.FC = () => {
     }
   }
 
+  /*
+  Keywords: [async, function, initializeMediaRecorder, navigator, MediaRecorder, getUserMedia]
+
+  Technical: Asynchronously initializes a media recorder instance with the user's audio stream.
+  Role:  
+    - async: Declares the function as asynchronous, allowing the use of await.
+    - function: Defines a reusable block of code.
+    - navigator: Provides access to browser functionalities, including media devices.
+    - MediaRecorder: API for recording audio.
+    - getUserMedia: Requests access to the user's microphone.
+  Constraints: May fail if the user denies microphone access or if the browser does not support the API.
+  Actions: Requests microphone access, creates a media recorder instance, and sets up data availability handling.
+  Dependencies: Relies on the MediaRecorder API and the getUserMedia function.
+  Outputs: Returns a media recorder instance for recording audio.
+  Performance: The process may introduce latency due to microphone access requests.
+  Security: Access to the microphone requires user permission, and any recorded data should be handled securely.
+  Scalability: The function can handle multiple recordings but may need enhancements for concurrent recordings.
+  Errors: Errors in initialization should be handled gracefully, potentially notifying the user.
+  */
+
   // Define a new function to create an audio blob and return the audio element and blob.
   const createAudioBlob = (
     audioChunks: Blob[],
@@ -145,6 +219,26 @@ const Frontend: React.FC = () => {
     // Return the audio blob and audio element.
     return { audioBlob, audio }
   }
+
+  /*
+  Keywords: [const, createAudioBlob, Blob, URL, Audio]
+
+  Technical: Creates an audio blob from recorded audio chunks and generates a URL for playback.
+  Role:  
+    - const: Declares a constant for the function.
+    - createAudioBlob: Function that encapsulates audio blob creation logic.
+    - Blob: Represents the audio data.
+    - URL: API for creating object URLs.
+    - Audio: API for playing audio.
+  Constraints: The function may fail if audio chunks are empty or if the format is unsupported.
+  Actions: Creates a blob from audio chunks and generates a URL for playback.
+  Dependencies: Relies on the Blob, URL, and Audio APIs.
+  Outputs: Returns an audio blob and an audio element for playback.
+  Performance: Blob creation is efficient, but large audio files may impact performance.
+  Security: Ensure that audio data is handled securely to prevent leaks.
+  Scalability: The function can handle various audio formats but may need enhancements for larger audio datasets.
+  Errors: Errors in blob creation should be handled gracefully, potentially notifying the user.
+  */
 
   // Define an asynchronous function to handle the recording process.
   const doRecordAudio = async (): Promise<AudioRecorderType> => {
@@ -186,9 +280,7 @@ const Frontend: React.FC = () => {
             // Resolve the promise with the recorded audio blob and the play function.
             /*
                          This approach encapsulates all relevant information about the recording in a single return value, making it easier for the calling function to access both the recorded audio data and the functionality to play it back. 
-
                          It allows for asynchronous handling of the recording process, ensuring that when the recording is complete, the promise resolves with the results. The play function is defined inline as part of the resolved object, maintaining the context of the recording session. 
-
                          This structure enhances readability and provides a straightforward way to manage related data and actions, while also allowing for future enhancements by enabling additional properties to be included in the returned object.
                         */
             resolve({
@@ -284,6 +376,26 @@ const Frontend: React.FC = () => {
       })
     }
   }
+
+  /*
+      Keywords: [async, doRecordAudio, initializeMediaRecorder, mediaRecorder, start, stop]
+
+      Technical: Asynchronously handles the audio recording process, initializing the media recorder and defining start and stop methods.
+      Role:  
+        - async: Declares the function as asynchronous, allowing the use of await.
+        - doRecordAudio: Main function to manage audio recording.
+        - initializeMediaRecorder: Function to set up the media recorder.
+        - mediaRecorder: Instance of the MediaRecorder API for recording audio.
+        - start, stop: Methods to control the recording process.
+      Constraints: The function may fail if the media recorder cannot be initialized or if the start/stop methods are not defined correctly.
+      Actions: Initializes the media recorder and defines methods to start and stop recording.
+      Dependencies: Relies on the MediaRecorder API and the initializeMediaRecorder function.
+      Outputs: Returns an object containing the audio blob and a play function.
+      Performance: Efficiently manages the recording process, but large audio files may impact performance.
+      Security: Ensure that audio data is handled securely to prevent leaks.
+      Scalability: The function can handle multiple recordings but may need enhancements for concurrent recordings.
+      Errors: Errors in the recording process should be handled gracefully, potentially notifying the user.
+      */
 
   // Return the JSX structure of the Frontend component, which includes a div containing the recording button and other UI elements. This structure defines how the component will be rendered in the browser, allowing user interaction and feedback.
   return (
