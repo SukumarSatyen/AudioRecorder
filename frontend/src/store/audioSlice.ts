@@ -1,7 +1,7 @@
 // Import required dependencies from Redux Toolkit
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 // Import audio related types
-import { AudioChunk, RecordingState } from '../../types/audio';
+import { AudioChunk, RecordingState } from './audioTypes';
 
 /*
 - Technical mechanics: Implements Redux Toolkit's slice pattern for state management using TypeScript
@@ -31,6 +31,14 @@ const initialState: RecordingState = {
   error: null,
   // Flag to track processing status
   isProcessing: false,
+  // Media recorder instance
+  mediaRecorder: null,
+  // Media stream instance
+  stream: null,
+  // Flag to track recording finished status
+  recordingFinished: false,
+  // Flag to track sending status
+  isSending: false,
 };
 
 /*

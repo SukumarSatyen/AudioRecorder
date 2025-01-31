@@ -1,7 +1,7 @@
 /**
  * Redux store configuration and setup
  * Central state management configuration for the application
- * Related: store/audioReducer.ts, components/AudioRecorder.tsx, App.tsx
+ * Related: store/audioReducer.ts, store/audioTypes.ts, components/AudioRecorder.tsx, App.tsx
  * Redux store serves as a centralized state container for managing application data flow
  */
 

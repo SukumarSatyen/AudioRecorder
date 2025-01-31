@@ -84,7 +84,7 @@ import {
 } from '../store/audioReducer';
 import { AppDispatch } from '../store';
 import config from '../config/config';
-import { AudioChunk } from '../types/audio';
+import { AudioChunk } from '../store/audioTypes';
 
 /**
  * Main AudioRecorder component implementation

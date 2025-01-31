@@ -13,7 +13,8 @@ import {
   setMergedAudio,
   setProcessing,
 } from '../store/audioSlice';
-import { AudioChunk } from '../types/audio';
+import { AudioChunk } from '../store/audioTypes.ts';
+import { UPLOAD_PATH } from '../store/audioReducer';
 
 // Define duration of each audio chunk in milliseconds
 const CHUNK_DURATION = 10000; // 10 seconds in milliseconds
@@ -35,13 +36,16 @@ export const useAudioRecorder = () => {
 
   // Function to start a new recording
   const startNewRecording = useCallback(async () => {
+    console.log('[useAudioRecorder.ts, startNewRecording] Starting new recording');
     try {
-      // Request access to audio input
+      console.log('[useAudioRecorder.ts, startNewRecording] Requesting audio input');
       const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log('[useAudioRecorder.ts, startNewRecording] Audio input granted');
       // Store stream in state
       setStream(audioStream);
 
       // Create new MediaRecorder instance
+      console.log('[useAudioRecorder.ts, startNewRecording] Creating MediaRecorder instance');
       const recorder = new MediaRecorder(audioStream);
       // Store recorder reference
       mediaRecorder.current = recorder;
@@ -49,20 +53,27 @@ export const useAudioRecorder = () => {
       // Handle data available event
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
+          console.log('[useAudioRecorder.ts, startNewRecording.ondataavailable] Data available, creating chunk');
           // Create chunk object with metadata
           const chunk: AudioChunk = {
             id: Date.now().toString(),
             blob: event.data,
             duration: CHUNK_DURATION,
             timestamp: Date.now(),
+            sent: false,
+            fileName: `recording_${Date.now()}.webm`,
+            filePath: `${UPLOAD_PATH}/recordings/${Date.now()}.webm`
           };
+          console.log('[useAudioRecorder.ts, startNewRecording.ondataavailable] Dispatching addChunk:', chunk);
           // Dispatch chunk to store
           dispatch(addChunk(chunk));
           
           // Automatically start next recording if not at max chunks
           if (chunks.length < 4) { // Check for less than 4 since new chunk isn't in state yet
+            console.log('[useAudioRecorder.ts, startNewRecording.ondataavailable] Less than 4 chunks, starting new recording');
             startNewRecording();
           } else {
+            console.log('[useAudioRecorder.ts, startNewRecording.ondataavailable] Max chunks reached, stopping stream');
             // Stop stream tracks when max chunks reached
             stream?.getTracks().forEach(track => track.stop());
             setStream(null);
@@ -71,9 +82,11 @@ export const useAudioRecorder = () => {
       };
 
       // Start recording
+      console.log('[useAudioRecorder.ts, startNewRecording] Starting recording');
       recorder.start();
       // Update recording state
       dispatch(startRecording());
+      console.log('[useAudioRecorder.ts, startNewRecording] Recording started successfully');
 
       // Set timeout to stop recording after chunk duration
       timeoutRef.current = setTimeout(() => {
@@ -91,19 +104,25 @@ export const useAudioRecorder = () => {
 
   // Function to stop current recording
   const stopCurrentRecording = useCallback(() => {
+    console.log('[useAudioRecorder.ts, stopCurrentRecording] Stopping current recording');
     // Check if recorder exists and is recording
     if (mediaRecorder.current && mediaRecorder.current.state === 'recording') {
+      console.log('[useAudioRecorder.ts, stopCurrentRecording] Recorder exists and is recording, stopping recorder');
       // Stop recorder and update state
       mediaRecorder.current.stop();
+      console.log('[useAudioRecorder.ts, stopCurrentRecording] Dispatching stopRecording');
       dispatch(stopRecording());
     }
     // Clear chunk duration timeout
+    console.log('[useAudioRecorder.ts, stopCurrentRecording] Clearing chunk duration timeout');
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
     // Stop all tracks in the stream
+    console.log('[useAudioRecorder.ts, stopCurrentRecording] Stopping all tracks in the stream');
     stream?.getTracks().forEach(track => track.stop());
     setStream(null);
+    console.log('[useAudioRecorder.ts, stopCurrentRecording] Current recording stopped successfully');
   }, [dispatch, stream]);
 
   // Function to merge recorded chunks
@@ -179,16 +198,18 @@ export const useAudioRecorder = () => {
 
   // Cleanup effect
   useEffect(() => {
-    return () => {
-      // Stop all media tracks
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      // Clear any pending timeouts
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
+    console.log('[useAudioRecorder.ts, cleanup] Cleaning up resources');
+    // Stop all media tracks
+    if (stream) {
+      console.log('[useAudioRecorder.ts, cleanup] Stopping all media tracks');
+      stream.getTracks().forEach(track => track.stop());
+    }
+    // Clear any pending timeouts
+    console.log('[useAudioRecorder.ts, cleanup] Clearing any pending timeouts');
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    console.log('[useAudioRecorder.ts, cleanup] Cleanup completed successfully');
   }, [stream]);
 
   // Return hook interface
