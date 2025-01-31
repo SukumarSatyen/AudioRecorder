@@ -728,3 +728,17 @@ export const AudioRecorder: React.FC = () => {
   - Redux error state management
   - Component error boundaries needed
 */
+
+/* Execution Order: 
+1. The AudioRecorder component initializes, logging its initialization.
+2. The Redux store is accessed to retrieve the current audio recording state.
+3. The component's state variables are initialized, including open dialog and recording status.
+4. The handleFormatsDetected function is defined to handle detected audio formats.
+5. The handleBrowserDetected function is defined to handle detected browser support.
+6. The initializeMediaRecorder function is defined to set up the media recorder instance.
+7. The component returns the UI elements for audio recording controls.
+8. User interactions trigger the start and stop recording actions, updating the Redux store.
+9. The media recorder captures audio chunks and manages state updates.
+10. The recorded audio is sent to the backend upon completion of the recording process.
+11. Any errors encountered during recording or sending are logged for debugging.
+*/

@@ -457,6 +457,20 @@ const Frontend: React.FC = () => {
 // Export the Frontend component as the default export for use in other parts of the application. This allows other modules to import and utilize the Frontend component, facilitating the overall structure and functionality of the application.
 export default Frontend
 
+/* Execution Order: 
+1. The Frontend component initializes, logging its initialization.
+2. State variables for the recorder, recording status, and supported formats are initialized.
+3. The handleFormatsDetected function is defined to update supported audio formats.
+4. The handleBrowserDetected function is defined to update browser support information.
+5. The initializeMediaRecorder function is defined to set up the media recorder instance.
+6. The component returns the UI elements for audio recording and format selection.
+7. User interactions trigger format detection and recorder initialization actions.
+8. Detected formats are logged and displayed to the user via toast notifications.
+9. Browser support information is logged and displayed to the user.
+10. The media recorder captures audio and updates the state accordingly.
+11. Any errors encountered during initialization or recording are logged for debugging.
+*/
+
 // pending to add
 
 // Add visual feedback during recording (e.g., waveform visualization)

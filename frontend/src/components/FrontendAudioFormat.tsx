@@ -246,3 +246,15 @@ Security: Securely exports the FrontendAudioFormat component without exposing se
 Scalability: Exporting a component does not affect scalability.
 Errors: None
 */
+
+/* Execution Order: 
+1. The FrontendAudioFormat component initializes, logging its initialization.
+2. The useEffect hook is triggered on component mount to start format detection.
+3. The getSupportedAudioFormats function is called to check for supported audio formats.
+4. Each format is tested for playback support using the canPlayType method.
+5. Supported formats are collected and logged to the console.
+6. The selected default format is set based on the detected formats.
+7. The detected formats are passed to the onFormatsDetected callback.
+8. Any errors encountered during format detection are logged for debugging.
+9. The component returns nothing visually, as it only handles format detection.
+*/
