@@ -45,6 +45,27 @@ export const useAudioRecorder = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   console.log('[useAudioRecorder.ts, useAudioRecorder] Initialized stream state');
 
+  /*
+  Keywords: [useAudioRecorder, useDispatch, useSelector, mediaRecorder, timeoutRef, stream]
+
+  - Technical: This hook manages audio recording functionality using the MediaRecorder API and Redux for state management.
+  - Role:
+    - `useAudioRecorder`: Custom hook that encapsulates audio recording logic.
+    - `useDispatch`: Redux hook to dispatch actions to the store.
+    - `useSelector`: Redux hook to access state from the store.
+    - `mediaRecorder`: Reference to the MediaRecorder instance for handling audio recording.
+    - `timeoutRef`: Reference to manage timeout for chunk duration.
+    - `stream`: State to hold the media stream from the user's audio input.
+  - Constraints: Requires user permission to access audio input; may fail if permissions are denied.
+  - Actions: Initializes state and references for recording audio.
+  - Dependencies: Relies on Redux store and MediaRecorder API.
+  - Outputs: Updates Redux store with audio state and manages media stream.
+  - Performance: Efficiently manages audio chunks and recording state.
+  - Security: Must handle user permissions securely; ensure no sensitive data is exposed.
+  - Scalability: Can handle multiple audio recordings but may require optimization for many simultaneous recordings.
+  - Errors: Dispatches errors to Redux store if audio input cannot be accessed.
+  */
+
   // Function to start a new recording
   const startNewRecording = useCallback(async () => {
     console.log('[useAudioRecorder.ts, startNewRecording] Starting new recording process');
@@ -139,6 +160,25 @@ export const useAudioRecorder = () => {
     }
   }, [dispatch, chunks.length, stream]);
 
+  /*
+  Keywords: [startNewRecording, audioStream, recorder, chunk]
+
+  - Technical: Starts a new audio recording session using the MediaRecorder API.
+  - Role:
+    - `startNewRecording`: Function that encapsulates the logic for starting a new recording session.
+    - `audioStream`: Represents the media stream captured from the user's microphone.
+    - `recorder`: Instance of MediaRecorder that handles the recording.
+    - `chunk`: Represents the audio chunk created from the recorded data.
+  - Constraints: Must handle user permissions and potential errors during recording.
+  - Actions: Initializes the recording process and manages audio input.
+  - Dependencies: Relies on navigator.mediaDevices for audio input and MediaRecorder API.
+  - Outputs: Dispatches audio chunks to Redux store and updates recording state.
+  - Performance: Efficiently handles audio data in chunks.
+  - Security: Must ensure secure handling of user audio input.
+  - Scalability: Can manage multiple recordings but may need optimization for larger datasets.
+  - Errors: Dispatches errors to Redux store if recording fails.
+  */
+
   // Function to stop current recording
   const stopCurrentRecording = useCallback(() => {
     console.log('[useAudioRecorder.ts, stopCurrentRecording] Stopping current recording process');
@@ -167,6 +207,22 @@ export const useAudioRecorder = () => {
 
     console.log('[useAudioRecorder.ts, stopCurrentRecording] Current recording process completed');
   }, [dispatch, stream]);
+
+  /*
+  Keywords: [stopCurrentRecording]
+
+  - Technical: Stops the current audio recording session and cleans up resources.
+  - Role:
+    - `stopCurrentRecording`: Function that encapsulates the logic for stopping the recording session.
+  - Constraints: Must ensure that the recorder is in a valid state before stopping.
+  - Actions: Stops the media recorder and clears any pending timeouts.
+  - Dependencies: Relies on the mediaRecorder reference and the stream state.
+  - Outputs: Updates the Redux store to reflect the stopped recording state.
+  - Performance: Efficiently cleans up resources after recording.
+  - Security: Must handle user permissions appropriately.
+  - Scalability: Can handle multiple recordings but may need optimization for larger datasets.
+  - Errors: Dispatches errors to Redux store if stopping fails.
+  */
 
   // Function to merge recorded chunks
   const mergeChunks = useCallback(async () => {
@@ -272,6 +328,26 @@ export const useAudioRecorder = () => {
     }
   }, [chunks, dispatch]);
 
+  /*
+  Keywords: [mergeChunks, audioContext, audioBuffers, mergedBuffer, mergedBlob]
+
+  - Technical: Merges recorded audio chunks into a single audio blob using the AudioContext API.
+  - Role:
+    - `mergeChunks`: Function that encapsulates the logic for merging audio chunks.
+    - `audioContext`: Represents the audio processing context for merging.
+    - `audioBuffers`: Array of audio buffers created from recorded chunks.
+    - `mergedBuffer`: Represents the final merged audio buffer.
+    - `mergedBlob`: Represents the final merged audio blob.
+  - Constraints: Requires valid audio buffers to merge; may fail if buffers are empty.
+  - Actions: Merges audio buffers and stores the result in the Redux store.
+  - Dependencies: Relies on AudioContext API and Redux actions.
+  - Outputs: Dispatches the merged audio blob to the Redux store.
+  - Performance: Efficiently merges audio data and handles memory management.
+  - Security: Must ensure secure handling of audio data.
+  - Scalability: Can handle multiple recordings but may need optimization for larger datasets.
+  - Errors: Dispatches errors to Redux store if merging fails.
+  */
+
   // Cleanup effect
   useEffect(() => {
     console.log('[useAudioRecorder.ts, cleanup] Cleaning up resources');
@@ -291,6 +367,22 @@ export const useAudioRecorder = () => {
     console.log('[useAudioRecorder.ts, cleanup] Cleanup completed successfully');
   }, [stream]);
 
+  /*
+  Keywords: [useEffect]
+
+  - Technical: Cleans up resources when the component unmounts or dependencies change.
+  - Role:
+    - `useEffect`: React hook that performs side effects in function components.
+  - Constraints: Must ensure that resources are cleaned up properly to avoid memory leaks.
+  - Actions: Stops all media tracks and clears timeouts.
+  - Dependencies: Relies on stream state and timeout references.
+  - Outputs: Cleans up resources to prevent memory leaks.
+  - Performance: Efficiently manages resource cleanup.
+  - Security: Must handle user permissions appropriately.
+  - Scalability: Can handle multiple recordings but may need optimization for larger datasets.
+  - Errors: Dispatches errors to Redux store if cleanup fails.
+  */
+
   // Return hook interface
   console.log('[useAudioRecorder.ts, useAudioRecorder] Returning hook interface');
   return {
@@ -302,3 +394,14 @@ export const useAudioRecorder = () => {
     mergedAudio,
   };
 };
+
+/* Execution Order:
+1. The hook initializes and sets up the Redux dispatch and state.
+2. The user starts a new recording by calling `startNewRecording`.
+3. The audio stream is requested, and recording begins with `MediaRecorder`.
+4. Recorded audio data is processed in chunks and dispatched to the Redux store.
+5. The user can stop the recording by calling `stopCurrentRecording`.
+6. Recorded chunks can be merged by calling `mergeChunks`.
+7. The cleanup effect stops all media tracks and clears timeouts when the component unmounts.
+8. The hook returns the recording functions and state variables for use in components.
+*/
