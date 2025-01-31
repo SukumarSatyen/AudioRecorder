@@ -4,13 +4,18 @@
   "description": "Audio recording and transcription application with frontend and backend services",
   "type": "module",
   "scripts": {
-    "prestart": "npm cache clean --force && npm install",
+    "prestart": "npm install glob npkill rimraf && node -e \"require('rimraf').sync(require('glob').sync('**/node_modules'))\" && npm cache clean --force && npm install",
     "start": "cd frontend && npm install && npm run dev",
     "frontend": "cd frontend && npm install && npm run dev",
     "backend": "cd backend && npm install && cross-env NODE_NO_WARNINGS=1 npm run dev"
   },
   "dependencies": {
     "concurrently": "^8.2.0",
-    "cross-env": "^7.0.3"
+    "cross-env": "^7.0.3",
+    "glob": "^11.0.1",
+    "npkill": "^0.12.2"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1"
   }
 }
