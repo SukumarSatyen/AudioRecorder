@@ -5,21 +5,42 @@
 ```
 frontend/
 ├── src/
+│   ├── App.tsx
+│   ├── index.css
+│   ├── main.tsx
+│   ├── vite-env.d.ts
 │   ├── pages/
 │   │   ├── Home.tsx           # Portfolio home page with skills and experience
+│   │   ├── Navigation.tsx
+│   │   ├── README.md
 │   │   └── Recording.tsx      # Audio recording interface
+│   ├── components/
+│   │   ├── AudioRecorder.tsx
+│   │   ├── Frontend.tsx
+│   │   ├── FrontendAudioFormat.tsx
+│   │   └── FrontendBrowser.tsx
 │   ├── hooks/
 │   │   └── useAudioRecorder.ts # Custom hook for audio recording
 │   ├── store/
-│   │   ├── index.ts           # Redux store configuration
-│   │   └── slices/
-│   │       └── audioSlice.ts  # Audio state management
-│   ├── types/
-│   │   └── audio.ts           # TypeScript definitions for audio
-│   └── utils/
-│       └── fileStorage.ts     # Core storage utility
-├── components/
-│   └── AudioRecorder.tsx      # UI component for recording
+│   │   ├── audioReducer.ts
+│   │   ├── audioSlice.ts      # Audio state management
+│   │   ├── audioTypes.ts
+│   │   └── index.ts           # Redux store configuration
+│   ├── utils/
+│   │   └── fileStorage.ts     # Core storage utility
+│   └── ...
+├── assets/
+│   └── images/
+│       └── logo.png           # Application logo
+├── public/
+│   └── index.html             # Entry point for the application
+├── styles/
+│   └── global.css             # Global CSS styles
+├── tests/
+│   └── unit/
+│       └── fileStorage.test.ts # Unit tests for file storage
+├── config/
+│   └── tsconfig.app.json      # TypeScript configuration
 └── ...
 ```
 
@@ -35,17 +56,17 @@ The Home component (`src/pages/Home.tsx`) displays a portfolio page with:
 ### Dependencies
 ```json
 {
-  "@emotion/react": "^11.11.3",
-  "@emotion/styled": "^11.11.0",
-  "@mui/material": "^5.15.10",
-  "@reduxjs/toolkit": "^2.2.1",
-  "framer-motion": "^11.0.5",
-  "lucide-react": "^0.344.0",
-  "react": "^18.3.1",
-  "react-dom": "^18.3.1",
-  "react-redux": "^9.1.0",
-  "react-router-dom": "^6.22.1",
-  "react-toastify": "^9.0.8"
+  "@emotion/react": "^11.12.0",
+  "@emotion/styled": "^11.12.0",
+  "@mui/material": "^5.16.0",
+  "@reduxjs/toolkit": "^2.3.0",
+  "framer-motion": "^11.1.0",
+  "lucide-react": "^0.346.0",
+  "react": "^18.4.0",
+  "react-dom": "^18.4.0",
+  "react-redux": "^9.2.0",
+  "react-router-dom": "^6.23.0",
+  "react-toastify": "^10.0.0"
 }
 ```
 
