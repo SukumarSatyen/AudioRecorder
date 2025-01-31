@@ -86,18 +86,7 @@ import { AppDispatch } from '../store';
 import config from '../config/config';
 import { AudioChunk } from '../store/audioTypes';
 
-/**
- * Main AudioRecorder component implementation
- * Provides user interface for recording, merging, and managing audio chunks
- * Related: store/audioReducer.ts, components/Navigation.tsx
- * Functional components in React use hooks to manage state and side effects
- * Syntax:
- *   - getUserMedia: `navigator.mediaDevices.getUserMedia({ audio: true })`
- *   - MediaRecorder events: `mediaRecorder.ondataavailable = (e) => chunks.push(e.data)`
- */
-
 // Keywords: [React, useState, useDispatch, useSelector, RootState, Material-UI components, Lucide icons, ToastContainer, motion, Redux actions, AppDispatch, config, AudioChunk]
-
 /*
 - Technical mechanics: Imports necessary React hooks, Redux utilities, UI components, and custom types for building the audio recorder interface.
 
@@ -163,7 +152,6 @@ export const AudioRecorder: React.FC = () => {
   } = useSelector((state: RootState) => state.audio);
 
   // Keywords: [AudioRecorder, dispatch, openDialog, isRecording, chunks, mergedAudio, error, isProcessing, recordingFinished, isSending]
-
 /*
 - Technical mechanics: Initializes component state and connects to Redux store for audio recording state management.
 
@@ -236,7 +224,6 @@ export const AudioRecorder: React.FC = () => {
    */
   // Handler Functions Block
 // Keywords: [handleStartRecording, handleStopRecording, handleMergeChunks, handlePlayMerged, handleOpenDialog, handleCloseDialog, handleSendChunks, canSendChunks]
-
 /*
 - Technical mechanics: Collection of event handlers managing different aspects of the audio recording process through Redux actions and local state management.
 
@@ -355,78 +342,15 @@ export const AudioRecorder: React.FC = () => {
     }
   };
 
-  // UI Rendering Block
-// Keywords: [Box, Typography, Alert, Button, LinearProgress, motion, ToastContainer, progressPercentage, canMergeChunks]
-
-/*
-- Technical mechanics: Renders a Material-UI based interface with animated components and progress indicators for audio recording functionality.
-
-- Role in the broader system:
-  - Box: Container component for layout structure
-  - Typography: Text display and headings
-  - Alert: Error message display
-  - Button: User interaction controls
-  - LinearProgress: Visual feedback for recording progress
-  - motion: Animated UI elements
-  - ToastContainer: Notification system
-  - progressPercentage: Recording progress calculation
-  - canMergeChunks: State-based UI control
-
-- Edge cases or constraints:
-  - Screen size limitations
-  - Browser animation performance
-  - State synchronization delays
-  - UI responsiveness during processing
-  - Maximum chunk limit (5)
-
-- Immediate action performed:
-  - Renders recording interface
-  - Updates progress indicators
-  - Displays error states
-  - Manages button states
-  - Shows processing feedback
-
-- Dependencies/inputs:
-  - Material-UI components
-  - Framer Motion for animations
-  - Redux state values
-  - Handler functions
-  - Component state
-
-- Outputs/state changes:
-  - Visual UI updates
-  - Button state changes
-  - Progress bar updates
-  - Error message display
-  - Animation states
-
-- Performance considerations:
-  - Component re-render frequency
-  - Animation performance
-  - State update batching
-  - UI responsiveness
-  - Memory usage for animations
-
-- Security concerns:
-  - XSS in error messages
-  - State manipulation protection
-  - User input validation
-  - Safe rendering of dynamic content
-
-- Scalability:
-  - Handles multiple recording states
-  - Responsive design
-  - Component composition
-  - State management efficiency
-  - UI performance with many chunks
-
-- Error handling:
-  - Visual error feedback
-  - Graceful UI degradation
-  - Loading states
-  - Disabled states
-  - User feedback mechanisms
-*/
+  // Detailed comments for handler functions
+  // handleStartRecording: Initiates audio recording session via Redux action
+  // handleStopRecording: Terminates active recording and prepares for processing
+  // handleMergeChunks: Combines recorded audio segments into a single file
+  // handlePlayMerged: Manages audio playback using browser's Audio API
+  // handleOpenDialog: Controls dialog visibility for chunk sending UI
+  // handleCloseDialog: Manages dialog closure state
+  // handleSendChunks: Triggers backend upload of recorded audio
+  // canSendChunks: Guards against invalid state transitions in sending process
 
   const handleOpenDialog = () => {
     console.log('[AudioRecorder.tsx, handleOpenDialog] Opening send confirmation dialog');
@@ -706,4 +630,101 @@ export const AudioRecorder: React.FC = () => {
       </Dialog>
     </Box>
   );
+
+  // UI Rendering Block
+  // Keywords: [Box, Typography, Alert, Button, LinearProgress, motion, ToastContainer, progressPercentage, canMergeChunks]
+  /*
+  - Technical mechanics: Renders a Material-UI based interface with animated components and progress indicators for audio recording functionality.
+
+  - Role in the broader system:
+    - Box: Container component for layout structure
+    - Typography: Text display and headings
+    - Alert: Error message display
+    - Button: User interaction controls
+    - LinearProgress: Visual feedback for recording progress
+    - motion: Animated UI elements
+    - ToastContainer: Notification system
+    - progressPercentage: Recording progress calculation
+    - canMergeChunks: State-based UI control
+
+  - Edge cases or constraints:
+    - Screen size limitations
+    - Browser animation performance
+    - State synchronization delays
+    - UI responsiveness during processing
+    - Maximum chunk limit (5)
+
+  - Immediate action performed:
+    - Renders recording interface
+    - Updates progress indicators
+    - Displays error states
+    - Manages button states
+    - Shows processing feedback
+
+  - Dependencies/inputs:
+    - Material-UI components
+    - Framer Motion for animations
+    - Redux state values
+    - Handler functions
+    - Component state
+
+  - Outputs/state changes:
+    - Visual UI updates
+    - Button state changes
+    - Progress bar updates
+    - Error message display
+    - Animation states
+  */
 };
+
+// Keywords: [AudioRecorder, dispatch, openDialog, isRecording, chunks, mergedAudio, error, isProcessing, recordingFinished, isSending]
+/*
+- Technical mechanics: The AudioRecorder component is a functional React component that manages the state of the audio recording process.
+
+- Role in the broader system:
+  - The AudioRecorder component is the main component responsible for managing the audio recording process.
+  - It uses the dispatch function to trigger Redux actions for state changes.
+  - It uses the openDialog state to control the visibility of the dialog for chunk management.
+  - It uses the isRecording state to track the active recording state.
+  - It uses the chunks state to store recorded audio segments.
+  - It uses the mergedAudio state to hold combined audio data.
+  - It uses the error state to capture error states.
+  - It uses the isProcessing state to indicate ongoing operations.
+  - It uses the recordingFinished state to signal completion.
+  - It uses the isSending state to track upload state.
+
+- Edge cases or constraints:
+  - State synchronization delays
+  - Memory limitations for large audio chunks
+  - Browser audio API restrictions
+
+- Immediate action performed:
+  - Sets up component state
+  - Connects to Redux store
+
+- Dependencies/inputs:
+  - Redux store configuration
+  - React state hooks
+  - Browser audio APIs
+
+- Outputs/state changes:
+  - Local dialog state
+  - Access to global audio state
+
+- Performance considerations:
+  - Redux selector optimization
+  - State update frequency
+  - Memory usage for audio data
+
+- Security concerns:
+  - Audio data handling
+  - State manipulation protections
+
+- Scalability:
+  - Handles multiple recording sessions
+  - Manages growing audio chunks
+
+- Error handling:
+  - Redux error state management
+  - Component error boundaries needed
+*/
