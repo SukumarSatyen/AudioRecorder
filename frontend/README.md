@@ -219,7 +219,7 @@ The application uses Redux Toolkit for state management:
 - Audio state slice in `src/store/slices/audioSlice.ts`
 - Typed hooks (`useAppDispatch`, `useAppSelector`) for type-safe Redux usage
 
-(c) Sukumar Satyen 2005 CC-BY-NC-ND
+(c) Sukumar Satyen 2025 CC-BY-NC-ND
 
 This work is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.
 
