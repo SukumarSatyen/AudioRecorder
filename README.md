@@ -132,7 +132,7 @@ AWS_BUCKET_NAME=your_bucket_name
   - Random suffix
   - Original file extension
 
-(c) Sukumar Satyen 2005 CC-BY-NC-ND
+(c) Sukumar Satyen 2025 CC-BY-NC-ND
 
 This work is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.
 

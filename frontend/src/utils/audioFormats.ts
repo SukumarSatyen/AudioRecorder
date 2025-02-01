@@ -124,12 +124,12 @@ export const getSupportedMimeType = (): string => {
 
     const supportedTypesFormatted = Object.values(SUPPORTED_AUDIO_FORMATS)
         .filter(type => MediaRecorder.isTypeSupported(type))
-        .map(type => `• ${type}`)
+        .map(type => `\n • ${type}`)
         .join('\n');
 
     // Show toast notification with beautiful formatting
     toast.info(
-        `Supported Audio Formats:\n${supportedTypesFormatted}`,
+        `Supported Audio Formats:\n ${supportedTypesFormatted}`,
         {
             position: "top-right",
             autoClose: 2500,
@@ -290,6 +290,79 @@ export const getContentType = (filename: string): string => {
 };
 
 /**
+ * Gets comprehensive audio format information
+ * Keywords: [getAudioFormatInfo, getSupportedMimeType, getFileExtension, getContentType]
+ * 
+ * Technical: Combines all audio format information into a single JSON response
+ * Role: Provides a unified interface for audio format details
+ * Constraints: Limited to supported audio formats
+ * Actions: Retrieves MIME type, extension, and content type with fallbacks
+ * Dependencies: Requires all three underlying functions
+ * Outputs: JSON object with format information
+ * Performance: Multiple lookups but cached results
+ * Security: No direct risks, uses validated data
+ * Scalability: Extensible with new format properties
+ * Errors: Implements three-level fallback for content type
+ */
+export const getAudioFormatInfo = (): {
+    mimeType: string;
+    fileExtension: string;
+    contentType: string;
+} => {
+    console.log('[audioFormats.ts, getAudioFormatInfo] Starting format info retrieval');
+    
+    // Get the supported MIME type first
+    const mimeType = getSupportedMimeType();
+    console.log('[audioFormats.ts, getAudioFormatInfo] Retrieved MIME type:', mimeType);
+    
+    // Get the file extension based on the MIME type
+    const fileExtension = getFileExtension(mimeType);
+    console.log('[audioFormats.ts, getAudioFormatInfo] Retrieved file extension:', fileExtension);
+    
+    // Attempt to get content type with three-level fallback
+    let contentType: string;
+    
+    // First attempt: Get content type from base MIME type
+    try {
+        contentType = mimeType.split(';')[0];
+        console.log('[audioFormats.ts, getAudioFormatInfo] Determined content type from MIME:', contentType);
+        
+        // Validate if it's a proper audio content type
+        if (!contentType.startsWith('audio/')) {
+            throw new Error('Invalid audio content type');
+        }
+    } catch (error) {
+        console.log('[audioFormats.ts, getAudioFormatInfo] Failed to get content type from MIME, trying filename method');
+        
+        // Second attempt: Try getting content type from filename
+        try {
+            const sampleFilename = `sample${fileExtension}`;
+            console.log('[audioFormats.ts, getAudioFormatInfo] Generating sample filename:', sampleFilename);
+            contentType = getContentType(sampleFilename);
+            
+            if (!contentType) {
+                throw new Error('No content type from filename');
+            }
+            console.log('[audioFormats.ts, getAudioFormatInfo] Retrieved content type from filename:', contentType);
+        } catch (error) {
+            // Final fallback: Use application/octet-stream
+            console.log('[audioFormats.ts, getAudioFormatInfo] Falling back to application/octet-stream');
+            contentType = 'application/octet-stream';
+        }
+    }
+    
+    // Return all information in a JSON object
+    const result = {
+        mimeType,
+        fileExtension,
+        contentType
+    };
+    
+    console.log('[audioFormats.ts, getAudioFormatInfo] Returning format info:', result);
+    return result;
+};
+
+/**
  * Execution Order:
  * 
  * 1. Define the FILE_EXTENSIONS constant.
@@ -298,8 +371,10 @@ export const getContentType = (filename: string): string => {
  * 4. Define the getSupportedMimeType function.
  * 5. Define the getFileExtension function.
  * 6. Define the getContentType function.
- * 7. Export the FILE_EXTENSIONS object.
- * 8. Export the getSupportedMimeType function.
- * 9. Export the getFileExtension function.
- * 10. Export the getContentType function.  
+ * 7. Define the getAudioFormatInfo function.
+ * 8. Export the FILE_EXTENSIONS object.
+ * 9. Export the getSupportedMimeType function.
+ * 10. Export the getFileExtension function.
+ * 11. Export the getContentType function.
+ * 12. Export the getAudioFormatInfo function.  
  */
