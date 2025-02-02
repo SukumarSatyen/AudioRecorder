@@ -8,16 +8,7 @@
 import React from "react"
 import { Container, Typography, Box, Grid, Paper } from "@mui/material"
 import { motion } from "framer-motion"
-import {
-  Code,
-  Database,
-  Cloud,
-  PenTool as Tools,
-  Layout,
-  TestTube,
-  Workflow,
-  Award,
-} from "lucide-react"
+import { Code, Database, Cloud, Layout, TestTube } from "lucide-react"
 
 /**
  * Skills data structure defining categories and their attributes

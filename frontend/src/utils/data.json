@@ -1,0 +1,20 @@
+[
+  {
+    "seqNo": 1,
+    "filename": "audioReducer.ts",
+    "methodName": "",
+    "message": "Initializing audio reducer module"
+  },
+  {
+    "seqNo": 2,
+    "filename": "audioReducer.ts",
+    "methodName": "",
+    "message": "Defining configuration constants Object { CHUNK_DURATION: 10000, MAX_CHUNKS: 5, BACKEND_URL: \"http://localhost:3001\", UPLOAD_PATH: \"/uploads\" }"
+  },
+  {
+    "seqNo": 3,
+    "filename": "audioReducer.ts",
+    "methodName": "",
+    "message": "Defining initial state Object { isRecording: false, currentChunkDuration: 0, chunks: [], mergedAudio: null, error: null, isProcessing: false, mediaRecorder: null, stream: null, recordingFinished: false, isSending: false }"
+  }
+]

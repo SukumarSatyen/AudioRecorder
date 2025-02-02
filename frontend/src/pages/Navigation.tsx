@@ -8,7 +8,7 @@
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { AppBar, Toolbar, Button, Box } from '@mui/material';
-import { Home, Mic } from 'lucide-react';
+import { Home, Mic, BarChart, File, Layers } from 'lucide-react';
 
 /**
  * Navigation component implementation
@@ -36,6 +36,30 @@ export const Navigation: React.FC = () => {
             startIcon={<Mic />}
           >
             Record
+          </Button>
+          <Button
+            component={RouterLink}
+            to="/codeflow"
+            color="inherit"
+            startIcon={<BarChart />}
+          >
+            Code Flow
+          </Button>
+          <Button
+            component={RouterLink}
+            to="/lld"
+            color="inherit"
+            startIcon={<File />}
+          >
+            Low Level Design
+          </Button>
+          <Button
+            component={RouterLink}
+            to="/hld"
+            color="inherit"
+            startIcon={<Layers />}
+          >
+            High Level Design
           </Button>
         </Box>
       </Toolbar>

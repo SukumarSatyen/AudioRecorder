@@ -5,7 +5,6 @@
  * The App component in React serves as the root component where the application's main structure and global providers are defined
  */
 
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './store';
@@ -14,6 +13,9 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { Home } from './pages/Home';
 import { Recording } from './pages/Recording';
 import { Navigation } from './pages/Navigation';
+import CodeFlow from './pages/CodeFlow';
+import LLD from './pages/LLD';
+import HLD from './pages/HLD';
 
 /**
  * Theme configuration for Material-UI
@@ -53,6 +55,9 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/record" element={<Recording />} />
+            <Route path="/codeflow" element={<CodeFlow />} />
+            <Route path="/lld" element={<LLD />} />
+            <Route path="/hld" element={<HLD />} />
           </Routes>
         </Router>
       </ThemeProvider>
