@@ -41,6 +41,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { AudioChunk, RecordingState } from './audioTypes';
 import { toast } from 'react-toastify';
 import { getSupportedMimeType } from "../utils/audioFormats";
+import { saveRecordedAudioHelper } from '../utils/fileStorage';
 
 console.log('[audioReducer.ts] Initializing audio reducer module');
 
@@ -550,6 +551,17 @@ export const startRecordingProcess = createAsyncThunk<void, void>(
             
             console.log('[audioReducer.ts, startRecordingProcess.ondataavailable] Dispatching addChunk action');
             await dispatch(addChunk(chunk as AudioChunk));
+            
+            // Save the audio chunk locally
+            try {
+                const saveResult = await saveRecordedAudioHelper([event.data], 'audio/webm');
+                if (!saveResult.success) {
+                    console.error('[audioReducer.ts, startRecordingProcess.ondataavailable] Error saving audio chunk:', saveResult.error);
+                }
+            } catch (error) {
+                console.error('[audioReducer.ts, startRecordingProcess.ondataavailable] Error in saveRecordedAudioHelper:', error);
+            }
+            
             chunkCount++;
             
             console.log('[audioReducer.ts, startRecordingProcess.ondataavailable] Checking chunk count and stream status', {
@@ -1117,5 +1129,3 @@ console.log('[audioReducer.ts] Exporting audio slice actions and reducers');
 
 
 export default audioSlice.reducer;
-
-

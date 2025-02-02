@@ -70,7 +70,7 @@ Role:
  * Provides type safety for browser's native file system operations
  */
 
-const path = require('path');
+import path from 'path';
 
 declare global {
     interface Window {
@@ -148,7 +148,6 @@ export const saveRecordedAudio = async (
      *  used, then the key property is not used.
      * 
      *  Then, Returns a Promise that resolves with a StorageResult object
-     * }
      */
 
     console.log('[fileStorage.ts, saveRecordedAudio] Starting audio save process');
@@ -383,7 +382,26 @@ export const saveRecordedAudio = async (
     }
 }
 
-
+/**
+ * Helper function to save recorded audio chunks
+ * @param recordedChunks - Array of recorded audio chunks
+ * @param mimeType - MIME type of the audio (e.g., 'audio/webm')
+ * @returns Promise<StorageResult>
+ */
+export const saveRecordedAudioHelper = async (
+    recordedChunks: BlobPart[],
+    mimeType: string
+): Promise<StorageResult> => {
+    try {
+        return await saveRecordedAudio(recordedChunks, mimeType);
+    } catch (error) {
+        console.error('[fileStorage.ts, saveRecordedAudioHelper] Error saving audio:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error saving audio'
+        };
+    }
+};
 
 /* Exisitng Execution Order:
 
