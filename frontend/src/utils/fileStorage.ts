@@ -19,64 +19,9 @@ Role:
   blob: Binary large object containing audio data
   filename: Generated unique file identifier
   handle: File system access reference
-  writable: Stream for writing data
-
-Constraints:
-- Requires modern browser with File System Access API support
-- Falls back to Electron API if browser API unavailable
-- Limited by available system storage
-- Dependent on network for server backup
-
-Actions:
-- Creates Blob from audio chunks
-- Generates unique filenames
-- Writes data to local file system
-- Attempts server backup
-- Handles various storage scenarios
-
-Dependencies:
-- File System Access API
-- Electron (optional)
-- Network connectivity for backup
-- audioFormats utility functions
-
-Outputs:
-- Saved audio file on local system
-- Optional server backup
-- Operation status and file details
-- Error information if operation fails
-
-Performance:
-- Streams data to avoid memory issues
-- Handles large audio files efficiently
-- Asynchronous operations prevent UI blocking
-
-Security:
-- Uses native file picker for safe paths
-- Sanitizes filenames
-- Validates mime types
-- Handles sensitive file operations safely
-
-Scalability:
-- Supports multiple audio formats
-- Handles varying file sizes
-- Provides multiple storage options
-- Extensible error handling
-
-Errors:
-- Graceful fallback between storage methods
-- Comprehensive error reporting
-- User feedback via toast messages
-- Detailed console logging */
-
-/**
- * Type definitions for the File System Access API
- * These interfaces define the contract for browser's native file system operations
- * Provides type safety for modern browser APIs that allow direct file access
- * Essential for implementing local file saving functionality
- */
-
-/* Keywords: [Window, FileSystemFileHandle, FileSystemWritableFileStream, WritableStream, SaveFilePickerOptions, StorageResult]
+  writable: Stream for writing data 
+  
+   Keywords: [Window, FileSystemFileHandle, FileSystemWritableFileStream, WritableStream, SaveFilePickerOptions, StorageResult]
 
 Technical: Defines TypeScript interfaces for File System Access API integration
 Role:
@@ -87,52 +32,46 @@ Role:
   SaveFilePickerOptions: File save dialog configuration
   StorageResult: Operation result type definition
 
-Constraints:
-- Browser must support File System Access API
-- TypeScript compiler must recognize these declarations
-- Limited to file operations supported by browser
+Keywords: [saveRecordedAudio, recordedChunks, mimeType, blob, filename, handle, writable, isElectron, saveWithElectron, uploadToServer]
 
-Actions:
-- Extends Window interface for file system operations
-- Defines file handle management interface
-- Specifies stream writing capabilities
-- Structures save dialog options
-- Defines operation result format
+Technical: Implements multi-strategy audio file saving with fallback mechanisms
+Role:
+  saveRecordedAudio: Main function orchestrating save operations
+  recordedChunks: Raw audio data array
+  mimeType: Audio format identifier
+  blob: Binary audio data container
+  filename: Generated unique file identifier
+  handle: File system access point
+  writable: File write stream
+  isElectron: Environment detection function
+  saveWithElectron: Electron-specific save implementation
+  uploadToServer: Cloud storage implementation
 
-Dependencies:
-- TypeScript compiler
-- Browser's File System Access API
-- WritableStream Web API
+ Keywords: [uploadToServer, blob, filename, FormData, fetch]
 
-Outputs:
-- Type-safe file system operations
-- Structured operation results
-- Consistent interface definitions
+Technical: Implements server-side storage for audio recordings
+Role:
+  uploadToServer: Manages file upload to remote server
+  blob: Audio data to upload
+  filename: File identifier
+  FormData: Data container for upload
+  fetch: Network request handler
 
-Performance:
-- Zero runtime overhead (TypeScript types)
-- Enables compiler optimizations
-- Facilitates IDE autocompletion
 
-Security:
-- Type-safe file operations
-- Controlled file access patterns
-- Structured error handling
+ Keywords: [hasFileSystemAccess, window, showSaveFilePicker]
 
-Scalability:
-- Extensible interface definitions
-- Supports future API additions
-- Maintainable type structure
-
-Errors:
-- Compile-time type checking
-- Runtime type validation
-- Structured error reporting */
-
-/**
- * Extends the Window interface to include File System Access API
- * This ensures TypeScript recognizes these modern browser APIs
+Technical: Detects browser support for File System Access API
+Role:
+  hasFileSystemAccess: Feature detection function
+  window: Global browser object
+  showSaveFilePicker: File system API method
+  
+ * Type definitions for File System Access API interfaces
+ * Provides type safety for browser's native file system operations
  */
+
+const path = require('path');
+
 declare global {
     interface Window {
         showSaveFilePicker(options?: SaveFilePickerOptions): Promise<FileSystemFileHandle>;
@@ -140,10 +79,8 @@ declare global {
 }
 
 /**
- * Writable file stream interface for file system operations
- * Enables streaming write operations to local files
- * Used by saveRecordedAudio for file writing
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/WritableStream} - WritableStream API
+ * Writable stream interface for file operations
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/WritableStream}
  */
 interface FileSystemWritableFileStream extends WritableStream {
     write(data: any): Promise<void>;
@@ -173,99 +110,58 @@ interface StorageResult {
     error?: string;
 }
 
+/**
+ * Benefits of using interfaces in TypeScript:
+ * 1. **Type Safety**: Interfaces ensure that the object conforms to a specific structure, preventing errors due to incorrect property assignments.
+ * 2. **Code Readability**: Interfaces provide explicit documentation on the expected shape of the object, making the code more understandable by other developers.
+ * 3. **Auto-completion**: When using an interface, IDEs and code editors can provide auto-completion suggestions for the properties and methods, making development more efficient.
+ * 4. **Flexibility**: Interfaces allow for optional properties, making it easier to handle different scenarios and edge cases.
+ */
+
+
 import { getAudioFormatInfo } from './audioFormats';
 import { toast } from 'react-toastify';
 
-/**
- * Primary function for saving recorded audio data
- * Creates a Blob from the recorded chunks and generates a unique filename
- * 
- * @param {BlobPart[]} recordedChunks - Array of recorded audio segments
- * @param {string} mimeType - Audio format specification (default: audio/webm)
- * Related: components/AudioRecorder.tsx, store/slices/audioSlice.ts
- * File saving utilities handle browser-specific file system operations and provide a consistent interface
- * Syntax:
- *   - Blob URL: `URL.createObjectURL(new Blob([data]))`
- *   - Download trigger: `<a download="${filename}" href="${url}"></a>`
- */
-
-/* Keywords: [saveRecordedAudio, recordedChunks, mimeType, blob, filename, handle, writable, isElectron, saveWithElectron, uploadToServer]
-
-Technical: Implements multi-strategy audio file saving with fallback mechanisms
-Role:
-  saveRecordedAudio: Main function orchestrating save operations
-  recordedChunks: Raw audio data array
-  mimeType: Audio format identifier
-  blob: Binary audio data container
-  filename: Generated unique file identifier
-  handle: File system access point
-  writable: File write stream
-  isElectron: Environment detection function
-  saveWithElectron: Electron-specific save implementation
-  uploadToServer: Cloud storage implementation
-
-Constraints:
-- Requires either File System Access API, Electron, or network connection
-- File size limited by available storage
-- Mime type must be supported audio format
-- Filename must be unique
-
-Actions:
-- Creates blob from audio chunks
-- Generates timestamped filename
-- Attempts File System Access API save
-- Falls back to Electron if available
-- Attempts server upload as final option
-- Provides user feedback via toasts
-
-Dependencies:
-- File System Access API
-- Electron (optional)
-- Network connectivity
-- Toast notification system
-- audioFormats utility
-
-Outputs:
-- StorageResult object with success status
-- Local file path or server key
-- Error information if all methods fail
-- User notifications of save status
-
-Performance:
-- Streams data to avoid memory issues
-- Asynchronous operations
-- Progressive enhancement approach
-- Efficient fallback strategy
-
-Security:
-- Uses native file dialogs
-- Sanitizes file paths
-- Validates mime types
-- Handles sensitive data carefully
-
-Scalability:
-- Multiple storage strategies
-- Extensible error handling
-- Configurable mime types
-- Adaptable to new storage methods
-
-Errors:
-- Comprehensive error catching
-- Graceful fallback chain
-- Detailed error logging
-- User-friendly error messages */
-
 export const saveRecordedAudio = async (
-    recordedChunks: BlobPart[],
-    mimeType: string = 'audio/webm'
+    recordedChunks: BlobPart[], 
+    // 'The chunks of audio data to be saved, represented as BlobPart objects.
+    // BlobPart is a type in the Web Audio API that represents a part of an audio or video file.
+    // It can be a chunk of audio data, such as an audio sample, or it can be a chunk of video data, such as a frame of video.
+    mimeType : string = getAudioFormatInfo().mimeType
+    // mimeType: string = 'audio/webm' // 'The MIME type of the audio data to be saved.'
 ): Promise<StorageResult> => {
+    /**
+     
+     * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise}
+     * @returns {Promise<StorageResult>}
+     * 
+     * interface declared above as StorageResult: {
+     * 
+     *  success: boolean
+     *  key?: string // key or identifier for the saved file
+     *  localPath?: string // local path where the file was saved
+     *  error?: string // error message if the save operation failed
+     * 
+     *  The key property is optional (?) because it is only used by the
+     *  server upload method, which is the last fallback method in the
+     *  saveRecordedAudio function. If the server upload method is not
+     *  used, then the key property is not used.
+     * 
+     *  Then, Returns a Promise that resolves with a StorageResult object
+     * }
+     */
+
     console.log('[fileStorage.ts, saveRecordedAudio] Starting audio save process');
     
-    /**
-     * Create a new Blob instance from the recorded chunks
-     * The type property ensures proper audio format handling
-     */
+    // Create blob and generate filename
     const blob = new Blob(recordedChunks, { type: mimeType });
+    // Create a new blob containing the recorded audio data
+    // After the user has finished recording
+    // The blob is created in memory
+    // To prepare the data for saving to the file system
+    // Using the Blob constructor with the recordedChunks array as the first argument, and an options object as the second argument
+
+
     console.log('[fileStorage.ts, saveRecordedAudio] Created blob with size:', blob.size, 'bytes');
     
     /**
@@ -274,386 +170,227 @@ export const saveRecordedAudio = async (
      */
     const formatInfo = getAudioFormatInfo();
     const extension = formatInfo.fileExtension;
-    const filename = `recording-${Date.now()}${extension}`;
+    
+    const filename = `rec-${Date.now()}${extension}`;
+    // Sample output: rec-1643723400.webm
+    // The filename is a timestamp (in milliseconds) concatenated with the file extension
+    // The timestamp is obtained using the Date.now() method
+    // The file extension is obtained from the getAudioFormatInfo() function
     console.log('[fileStorage.ts, saveRecordedAudio] Generated filename:', filename);
 
-    /**
-     * First Storage Attempt: File System Access API
-     * Check if the API is supported before attempting to use it
-     */
-    if (hasFileSystemAccess()) {
-        console.log('[fileStorage.ts, saveRecordedAudio] File System Access API available');
-        try {
-            console.log('[fileStorage.ts, saveRecordedAudio] Showing save file picker');
-            const handle = await window.showSaveFilePicker({
-                suggestedName: filename,
-                types: [{
-                    description: 'Audio File',
-                    accept: {
-                        [formatInfo.contentType]: [extension]
-                    }
-                }]
-            });
-            console.log('[fileStorage.ts, saveRecordedAudio] File handle obtained:', handle.name);
 
-            console.log('[fileStorage.ts, saveRecordedAudio] Creating writable stream');
-            const writable = await handle.createWritable();
-            
-            console.log('[fileStorage.ts, saveRecordedAudio] Writing blob to file');
-            await writable.write(blob);
-            
-            console.log('[fileStorage.ts, saveRecordedAudio] Closing file stream');
-            await writable.close();
-
-            /**
-             * Backup Strategy: Server Upload
-             * Even when local save succeeds, attempt server backup
-             * Provides redundancy and cloud access capability
-             * Notifies user of both save locations
-             */
-            try {
-                console.log('[fileStorage.ts, saveRecordedAudio] Attempting server backup');
-                await uploadToServer(blob, filename);
-                toast.success('Audio saved both locally and to server');
-                console.log('[fileStorage.ts, saveRecordedAudio] Server backup successful');
-            } catch (serverError) {
-                toast.info('Audio saved locally only');
-                console.warn('[fileStorage.ts, saveRecordedAudio] Server backup failed:', serverError);
-            }
-
-            console.log('[fileStorage.ts, saveRecordedAudio] Local save completed successfully');
-            return {
-                success: true,
-                localPath: handle.name
-            };
-        } catch (error) {
-            console.warn('[fileStorage.ts, saveRecordedAudio] File System API failed:', error);
-            console.log('[fileStorage.ts, saveRecordedAudio] Falling back to Electron or server');
-        }
-    }
-
-    /**
-     * Detects if the application is running in an Electron environment
-     * This function performs multiple checks to ensure we're in Electron:
-     * 1. Verifies that 'window' object exists
-     * 2. Checks if 'process' property is available on window
-     * 3. Ensures process object is properly initialized
-     * 4. Confirms we're in the renderer process of Electron
-     * 
-     * Type assertions (window as any) are used because TypeScript doesn't
-     * know about Electron's runtime additions to the window object
-     * 
-     * @returns {boolean} True if running in Electron, false otherwise
-     */
-    const isElectron = (): boolean => {
-        console.log('[fileStorage.ts, isElectron] Checking if running in Electron environment');
-        const result = window && 
-               'process' in window && 
-               (window as any).process && 
-               (window as any).process.type === 'renderer';
-        console.log('[fileStorage.ts, isElectron] Result:', result);
-        return result;
-    };
-
-    /**
-     * Saves a Blob object to the local filesystem using Electron's native APIs
-     * This function provides direct access to the OS file system through Electron
-     * 
-     * The process involves:
-     * 1. Environment validation - ensures we're in Electron
-     * 2. Module imports - dynamically loads required Electron modules
-     * 3. File dialog - shows native save dialog to get user's desired location
-     * 4. File conversion - converts Blob to Buffer for file system writing
-     * 5. File writing - saves the buffer to disk at chosen location
-     * 
-     * Error handling includes:
-     * - Environment compatibility checking
-     * - Dialog cancellation handling
-     * - File system operation error management
-     * - Type-safe error message extraction
-     * 
-     * @param {Blob} blob - The blob data to save (typically audio recording)
-     * @param {string} filename - Name to use for the save dialog
-     * @returns {Promise<string>} Path where the file was saved
-     * @throws {Error} If save fails or dialog is cancelled
-     * Related: components/AudioRecorder.tsx, store/slices/audioSlice.ts
-     * Electron file saving utilities handle native file system operations and provide a consistent interface
-     */
-    const saveWithElectron = async (blob: Blob, filename: string): Promise<string> => {
-        console.log('[fileStorage.ts, saveWithElectron] Starting Electron save process');
-        
-        if (!isElectron()) {
-            console.error('[fileStorage.ts, saveWithElectron] Not in Electron environment');
-            throw new Error('Not running in Electron environment');
-        }
-
-        console.log('[fileStorage.ts, saveWithElectron] Loading Electron modules');
-        const { dialog } = (window as any).require('electron').remote;
-        const fs = (window as any).require('fs').promises;
-
-        try {
-            console.log('[fileStorage.ts, saveWithElectron] Showing save dialog');
-            const result = await dialog.showSaveDialog({
-                title: 'Save Recording',
-                defaultPath: filename,
-                filters: [{ 
-                    name: 'Audio Files', 
-                    extensions: [extension.substring(1)] // Remove leading dot
-                }]
-            });
-
-            console.log('[fileStorage.ts, saveWithElectron] Processing save dialog result');
-            if (!result.canceled && result.filePath) {
-                console.log('[fileStorage.ts, saveWithElectron] Converting blob to buffer');
-                const buffer = await blob.arrayBuffer();
-                console.log('[fileStorage.ts, saveWithElectron] Writing buffer to file');
-                await fs.writeFile(result.filePath, Buffer.from(buffer));
-                console.log('[fileStorage.ts, saveWithElectron] File saved successfully');
-                return result.filePath;
-            }
-            console.error('[fileStorage.ts, saveWithElectron] Save dialog was canceled');
-            throw new Error('Save dialog was canceled');
-        } catch (error: unknown) {
-            console.error('[fileStorage.ts, saveWithElectron] Electron save failed:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-            throw new Error(`Electron save failed: ${errorMessage}`);
-        }
-    };
-
-    // Try Electron file system if available
-    if (isElectron()) {
-        try {
-            console.log('[fileStorage.ts, saveRecordedAudio] Attempting Electron save');
-            const localPath = await saveWithElectron(blob, filename);
-            
-            // Also try server backup if possible
-            try {
-                console.log('[fileStorage.ts, saveRecordedAudio] Attempting server backup');
-                await uploadToServer(blob, filename);
-                toast.success('Audio saved both locally and to server');
-                console.log('[fileStorage.ts, saveRecordedAudio] Server backup successful');
-            } catch (serverError) {
-                toast.info('Audio saved locally only');
-                console.warn('[fileStorage.ts, saveRecordedAudio] Server backup failed:', serverError);
-            }
-
-            console.log('[fileStorage.ts, saveRecordedAudio] Electron save completed successfully');
-            return {
-                success: true,
-                localPath
-            };
-        } catch (electronError) {
-            console.warn('[fileStorage.ts, saveRecordedAudio] Electron save failed, falling back to server:', electronError);
-            // Fall through to server upload
-        }
-    }
-
-    /**
-     * Final Fallback: Server Upload
-     * Last resort when both local storage methods fail
-     * Provides cloud-based storage solution
-     * Handles complete failure scenario with appropriate error reporting
-     * Related: components/AudioRecorder.tsx, store/slices/audioSlice.ts
-     * Server upload utilities handle cloud storage operations and provide a consistent interface
-     * Syntax:
-     *   - FormData append: `formData.append('file', blob, filename)`
-     *   - Progress event: `xhr.upload.onprogress = (e) => e.loaded / e.total`
-     */
-    try {
-        console.log('[fileStorage.ts, saveRecordedAudio] Attempting server upload');
-        const result = await uploadToServer(blob, filename);
-        toast.success('Audio saved to server');
-        console.log('[fileStorage.ts, saveRecordedAudio] Server upload successful');
-        return {
-            success: true,
-            key: result.key
-        };
-    } catch (error) {
-        console.error('[fileStorage.ts, saveRecordedAudio] All storage methods failed:', error);
-        toast.error('Failed to save audio file');
-        console.log('[fileStorage.ts, saveRecordedAudio] Error:', error);
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error occurred'
-        };
-    }
-};
-
-/**
- * Server upload functionality for audio files
- * Manages communication with backend storage service
- * Used by saveRecordedAudio for cloud storage
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API} - Fetch API
- * Related: components/AudioRecorder.tsx, store/slices/audioSlice.ts
- * Server upload utilities handle cloud storage operations and provide a consistent interface
- */
-
-/* Keywords: [uploadToServer, blob, filename, FormData, fetch]
-
-Technical: Implements server-side storage for audio recordings
-Role:
-  uploadToServer: Manages file upload to remote server
-  blob: Audio data to upload
-  filename: File identifier
-  FormData: Data container for upload
-  fetch: Network request handler
-
-Constraints:
-- Requires network connectivity
-- Server must support multipart/form-data
-- File size limited by server config
-- Valid filename required
-
-Actions:
-- Creates FormData object
-- Appends file with metadata
-- Sends POST request to server
-- Handles response parsing
-- Manages upload errors
-
-Dependencies:
-- Fetch API
-- Network connectivity
-- Server endpoint
-- Valid MIME types
-
-Outputs:
-- Upload success status
-- Server-generated key
-- Error details if failed
-- Progress information
-
-Performance:
-- Streaming upload support
-- Progress tracking
-- Timeout handling
-- Response caching
-
-Security:
-- Secure HTTPS connection
-- File type validation
-- Size limit enforcement
-- Error sanitization
-
-Scalability:
-- Handles multiple file types
-- Configurable endpoints
-- Extensible response handling
-- Load balancing ready
-
-Errors:
-- Network error handling
-- Timeout management
-- Response validation
-- Detailed error reporting */
-
-export const uploadToServer = async (blob: Blob, filename: string): Promise<{ key: string }> => {
-    console.log('[fileStorage.ts, uploadToServer] Starting server upload', { filename });
+    // File System Access API
     
-    try {
-        console.log('[fileStorage.ts, uploadToServer] Creating form data');
-        const formData = new FormData();
-        formData.append('audio', blob, filename);
+    // export const hasFileSystemAccess = (): boolean => {
+    /* return hasAccess; }; */
 
-        console.log('[fileStorage.ts, uploadToServer] Sending POST request to server');
-        const response = await fetch('http://localhost:3001/audio/add', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) {
-            console.error('[fileStorage.ts, uploadToServer] Server response not OK:', response.status);
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        console.log('[fileStorage.ts, uploadToServer] Upload successful');
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('[fileStorage.ts, uploadToServer] Upload failed:', error);
-        throw error;
-    }
-};
-
-/**
- * Browser capability detection for file system features
- * Ensures graceful fallback for unsupported browsers
- * Used by saveRecordedAudio for feature detection
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Navigator} - Navigator API
- * Related: components/AudioRecorder.tsx, store/slices/audioSlice.ts
- * Browser capability detection utilities handle feature detection and provide a consistent interface
- */
-
-/* Keywords: [hasFileSystemAccess, window, showSaveFilePicker]
-
-Technical: Detects browser support for File System Access API
-Role:
-  hasFileSystemAccess: Feature detection function
-  window: Global browser object
-  showSaveFilePicker: File system API method
-
-Constraints:
-- Browser compatibility required
-- Security context limitations
-- User permissions needed
-- API version dependencies
-
-Actions:
-- Checks window object
-- Validates API presence
-- Returns boolean result
-- Logs detection result
-
-Dependencies:
-- Modern browser
-- Secure context
-- Window object
-- Console logging
-
-Outputs:
-- Boolean support status
-- Console log messages
-- No side effects
-- Consistent results
-
-Performance:
-- Minimal overhead
-- Cached results
-- Quick execution
-- No async operations
-
-Security:
-- No sensitive data
-- Safe detection
-- No state changes
-- Read-only operation
-
-Scalability:
-- Browser agnostic
-- Version independent
-- Future API compatible
-- Maintainable code
-
-Errors:
-- Graceful degradation
-- Safe type checking
-- No exceptions
-- Clear logging */
-
-export function hasFileSystemAccess(): boolean {
     console.log('[fileStorage.ts, hasFileSystemAccess] Checking File System Access API support');
     const hasAccess = typeof window !== 'undefined' && 
            'showSaveFilePicker' in window &&
            typeof window.showSaveFilePicker === 'function';
-    console.log('[fileStorage.ts, hasFileSystemAccess] Support status:', hasAccess);
-    return hasAccess;
-};
 
-/* Execution Order:
+    /**
+     * Keywords:
+     *  hasAccess: Boolean indicating browser support for File System Access API
+     *  FileSystemFileHandle: Interface for file system access
+     *  FileSystemWritableFileStream: Interface for file writing operations
+     *  Window: Global interface extension for file system capabilities
+     *  typeof window !== 'undefined': Ensures that the window object is defined,
+     *                                which is necessary for the File System Access API
+     *                                to work properly. This check is necessary because
+     *                                the window object is not always defined, such as
+     *                                in server-side rendering scenarios.
+     *  'showSaveFilePicker' in window: Checks if the showSaveFilePicker method is available
+     *  typeof window.showSaveFilePicker === 'function': Ensures that the showSaveFilePicker method is a function
+     */
+
+    console.log('[fileStorage.ts, hasFileSystemAccess] Support status:', hasAccess);
+    // The filename is stored in memory, but is it possible for the browser to write
+    // directly to the local hard disk where the browser is running?
+    // The answer is yes, using the File System Access API.
+    // The browser can request access to the local file system using the
+    // showSaveFilePicker() method, which returns a FileSystemFileHandle object.
+    // The handle object can be used to create a FileSystemWritableFileStream object,
+    // which can be used to write data directly to the local file system.
+    // This provides a way for the browser to write data directly to the local
+    // hard disk, without having to use the server as an intermediary.
+    
+    if (!hasAccess) {
+        console.log('[fileStorage.ts, saveRecordedAudio] File System Access API not supported');
+        return {
+            success: false,
+            error: 'File System Access API not supported'
+        };
+    }
+
+    console.log('[fileStorage.ts, saveRecordedAudio] Attempting to save file using File System Access API');
+    
+    const osName = require('os').platform();
+    console.log('[fileStorage.ts, saveRecordedAudio] OS name:', osName);
+
+    const browserName = (() => {
+        const userAgent = navigator.userAgent;
+        if (userAgent.indexOf('Chrome') > -1) return 'Chrome';
+        if (userAgent.indexOf('Firefox') > -1) return 'Firefox';
+        if (userAgent.indexOf('Edge') > -1) return 'Edge';
+        if (userAgent.indexOf('Opera') > -1 || userAgent.indexOf('OPR') > -1) return 'Opera';
+        if (userAgent.indexOf('Safari') > -1) return 'Safari';
+        return 'Not included in Code';
+    })();
+    console.log('[fileStorage.ts, saveRecordedAudio] Browser name:', browserName);
+
+    const homedir = require('os').homedir();
+    const fs = require('fs').promises;
+    const folderPath = path.join(homedir, 'audio');
+    const filePath = path.join(folderPath, filename);
+
+    /* 
+    Keywords: [fileStorage.ts, saveRecordedAudio, homedir, fs, folderPath, filePath]
+    
+     * Keywords:
+     *  fileStorage.ts: This is the name of the file that contains the code
+     *  saveRecordedAudio: This is the name of the function that contains the code
+     *  homedir: This is the name of a variable that is used to store the home directory path
+     *  fs: This is the name of a variable that is used to store the file system module
+     *  folderPath: This is the name of a variable that is used to store the path of the folder where the file is being saved
+     *  filePath: This is the name of a variable that is used to store the path of the file that is being saved
+     */
+
+    const fileStorageConfig = {
+        osName,
+        browserName,
+        homedir,
+        folderPath,
+        filePath
+    };
+
+    console.log('[fileStorage.ts, saveRecordedAudio] File storage configuration:', fileStorageConfig);
+    const toastOptions = {
+        position: "bottom-right" as const,
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+    };
+
+    /* 
+    Fixed the type error by adding as const to the position value. 
+    The as const assertion tells TypeScript that "top-right" should be treated as a literal type rather than a general string.
+    Literal type is a type that has a specific value, while a general string is a type that can have any value.
+    For example, the type "top-right" is a literal type because it has a specific value, while the type string is a general string type because it can have any value.
+    In TypeScript, when you use a string literal in a type annotation, you are creating a literal type.
+    When you use a string literal in a type annotation, TypeScript will infer the type of the variable to be the literal type, not the general string type.
+    For example, if you write `const x: "top-right" = "top-right"`, the type of `x` is `"top-right"`, not `string`.
+    This is important because it allows TypeScript to check the type more accurately.
+    For example, if you have a function that takes a parameter of type `"top-right"`, TypeScript will throw an error if you try to call the function with a string that is not `"top-right"`.
+    If you had used a general string type instead, TypeScript would not throw an error, because the type `string` is satisfied by any string value, not just `"top-right"`.
+    By using a literal type, you are telling TypeScript that you are intentionally using a specific value, and you want it to check the type more accurately.
+    
+    This is important because React-Toastify's ToastPosition type is a union of specific string literals, not a general string type.
+    By using as const, we're telling TypeScript that we're intentionally using one of these specific values, which allows it to check the type more accurately.
+    
+
+    The valid positions for React-Toastify are:
+
+    "top-right"
+    "top-center"
+    "top-left"
+    "bottom-right"
+    "bottom-center"
+    "bottom-left"
+
+    The error occurred because React-Toastify's ToastPosition type only accepts these specific string literals, not any arbitrary string. 
+    By using as const, we're telling TypeScript that we're intentionally using one of these specific values.
+        
+    theme options: "colored", "dark", "light", "minimal"
+    */
+
+    toast(`File storage configuration: ${JSON.stringify(fileStorageConfig, null, 4)}`, toastOptions);
+    // JSON.stringify(fileStorageConfig, null, 4) is a formatted string representation of the fileStorageConfig object. 
+    // The second argument, null, is the replacer function which is not used here. 
+    // The third argument, 4, is the space parameter which specifies the number of spaces to use for indentation in the string representation. 
+    // The resulting string is a pretty-printed JSON representation of the fileStorageConfig object.`);
+
+    console.log('[fileStorage.ts, saveRecordedAudio] Attempting to save file directly to home directory: ', filePath);
+
+    try {
+        const folderExistsBoolean = await fs.stat(folderPath).then(() => true).catch(() => false);
+        // fs.stat(folderPath) - Returns information about the file or directory at the specified path.
+        // The information includes the file type, permissions, access time, modification time, and other attributes.
+        // If the file or directory does not exist, the method returns a rejected promise with an error object.
+        // The then() method is used to handle the resolved promise, and the catch() method is used to handle the rejected promise.
+        // The then() method returns a new promise that resolves with the value returned by the callback function.
+        // The catch() method returns a new promise that resolves with the value returned by the callback function if the original promise was rejected.
+        // In this case, the then() method returns a promise that resolves with the value true, and the catch() method returns a promise that resolves with the value false.
+        // The await keyword is used to wait for the promise to resolve, and the result is stored in the folderExists variable.
+        // The expected result is a boolean value indicating whether the folder exists or not.
+        // If the folder exists, the result is true, otherwise it is false.
+
+
+        console.log('[fileStorage.ts, saveRecordedAudio] Folder exists result:', folderExistsBoolean.toString());
+
+        if (typeof folderExistsBoolean === 'boolean' && folderExistsBoolean) {
+            console.log('[fileStorage.ts, saveRecordedAudio] Folder exists:', folderPath);
+        } else {
+            console.log('[fileStorage.ts, saveRecordedAudio] Folder does not exist:', folderPath);
+        
+            try {
+                await fs.mkdir(folderPath, { recursive: true });
+            } catch (error) {
+                console.log('[fileStorage.ts, saveRecordedAudio] Error creating folder:', error);
+            }
+            // fs.mkdir(folderPath, { recursive: true }) - Creates the directory specified in folderPath if it does not already exist.
+            // The { recursive: true } option means that the directory will be created recursively if any of its parent directories do not already exist.
+            // For example, if folderPath is /user/documents/audioRecordings, the mkdir method will create the directories /user, /user/documents, and /user/documents/audioRecordings if they do not already exist.
+            console.log('[fileStorage.ts, saveRecordedAudio] Created folder:', folderPath);
+        }
+            try {
+                const writable = await fs.open(filePath, 'w');
+                await writable.write(blob);
+                await writable.close();
+            } catch (error) {
+                console.log('[fileStorage.ts, saveRecordedAudio] Error writing to file:', error);
+            }
+            // fs.open(filePath, 'w') - Opens the file specified in filePath in write mode.
+            // The 'w' option stands for write mode.
+            // The method returns a promise that resolves with a FileHandle object.
+            // The FileHandle object is used to perform operations on the file.
+            // The await keyword is used to wait for the promise to resolve, and the result is stored in the writable variable.
+
+            // writable.write(blob) - Writes the blob to the file.
+            // The blob is the audio data as a blob object.
+            // The write method returns a promise that resolves when the write operation is complete.
+            // The await keyword is used to wait for the promise to resolve.
+
+            // writable.close() - Closes the file handle.
+            // The close method returns a promise that resolves when the file handle is closed.
+            // The await keyword is used to wait for the promise to resolve.
+        
+        return {
+            success: true,
+            localPath: filePath
+        };
+    } catch (error) {
+        console.error('[fileStorage.ts, saveRecordedAudio] Error saving file directly to home directory:', error);
+
+        return {
+            success: false,
+            error: 'Error saving file directly to home directory'
+        };
+    }
+}
+
+
+
+/* Exisitng Execution Order:
 
 1. Import Dependencies
    - getFileExtension from audioFormats
    - getContentType from audioFormats
+   - toast from toast
 
 2. Type Definitions
    - Window interface extension
@@ -676,18 +413,29 @@ export function hasFileSystemAccess(): boolean {
        3.3.4. Create writable stream
        3.3.5. Write blob data
        3.3.6. Close stream
-       3.3.7. Attempt server backup (uploadToServer)
-   3.4. Storage Strategy 2: Electron
-       3.4.1. Check Electron environment (isElectron)
-       3.4.2. Load Electron modules
-       3.4.3. Show save dialog
-       3.4.4. Convert blob to buffer
-       3.4.5. Write file
-       3.4.6. Attempt server backup (uploadToServer)
-   3.5. Storage Strategy 3: Server Upload
-       3.5.1. Call uploadToServer
-       3.5.2. Handle response
-   3.6. Return StorageResult
+       
+
+Planned Execution Order:
+
+   3.4. Storage Strategy A: File System Access API
+       3.4.1. Check API support (hasFileSystemAccess)
+       3.4.2. Show save file picker
+       3.4.3. Get file handle
+       3.4.4. Create writable stream
+       3.4.5. Write blob data
+       3.4.6. Close stream
+       3.4.7. Attempt server backup (uploadToServer)
+   3.5. Storage Strategy B: Electron
+       3.5.1. Check Electron environment (isElectron)
+       3.5.2. Load Electron modules
+       3.5.3. Show save dialog
+       3.5.4. Convert blob to buffer
+       3.5.5. Write file
+       3.5.6. Attempt server backup (uploadToServer)
+   3.6. Storage Strategy 3: Server Upload
+       3.6.1. Call uploadToServer
+       3.6.2. Handle response
+   3.7. Return StorageResult
 
 4. uploadToServer Function
    4.1. Create FormData
